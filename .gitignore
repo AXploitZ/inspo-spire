@@ -1,0 +1,13 @@
+# Planning artifacts
+docs/
+.superpowers/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
