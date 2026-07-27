@@ -599,7 +599,7 @@
     state.formVocab = (item.vocabulary || []).slice();
     state.modal = "edit"; state.detailItem = null; render();
   }
-  function closeModal(){ Modal.close(); }
+  function closeModal(){ state.modal = null; state.editingItem = null; state.detailItem = null; Modal.close(); }
 
   function renderModal(){
     var html = state.modal === "detail" ? renderDetailModal(state.detailItem) : renderFormModal();
