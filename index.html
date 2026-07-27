@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Specimen — Design Reference Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121319;
+    --surface:#1a1c24;
+    --surface-2:#20222c;
+    --border:#2b2e3a;
+    --border-soft:#23252f;
+    --text:#ecedf2;
+    --text-dim:#8b8fa0;
+    --text-faint:#5c5f6e;
+    --accent:#e8b04b;
+    --accent-soft:rgba(232,176,75,0.14);
+    --accent-strong:#f3c26a;
+    --danger:#e2645a;
+    --danger-soft:rgba(226,100,90,0.14);
+    --ok:#6fbf8b;
+    --radius:3px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+  ::selection{background:var(--accent-soft);color:var(--accent-strong);}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea,select{font-family:inherit;}
+
+  #app{max-width:1400px;margin:0 auto;padding:28px 32px 80px;}
+
+  header.topbar{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    gap:24px;flex-wrap:wrap;border-bottom:1px solid var(--border);
+    padding-bottom:20px;margin-bottom:24px;
+  }
+  .brand{display:flex;align-items:baseline;gap:12px;}
+  .brand-mark{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;
+    color:var(--accent);border:1px solid var(--accent-soft);
+    padding:3px 7px;border-radius:2px;text-transform:uppercase;
+  }
+  .brand h1{font-family:var(--font-display);font-weight:600;font-size:24px;letter-spacing:-0.01em;}
+  .brand-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);letter-spacing:0.03em;margin-top:4px;display:flex;align-items:center;gap:6px;}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block;}
+  .sync-dot.syncing{background:var(--accent);animation:pulse 1s infinite;}
+  .sync-dot.err{background:var(--danger);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  .topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .search-box{position:relative;}
+  .search-box input{
+    width:240px;background:var(--surface);border:1px solid var(--border);
+    color:var(--text);padding:9px 12px 9px 32px;border-radius:var(--radius);
+    font-size:13px;outline:none;transition:border-color .15s;
+  }
+  .search-box input:focus{border-color:var(--accent);}
+  .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.5;width:14px;height:14px;}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--radius);
+    border:1px solid var(--border);background:var(--surface);color:var(--text);
+    font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap;
+  }
+  .btn:hover{border-color:var(--text-faint);}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#1a1305;font-weight:600;}
+  .btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong);}
+  .btn-primary:disabled{opacity:0.55;cursor:not-allowed;}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--text-dim);}
+  .btn-ghost:hover{color:var(--text);background:var(--surface);}
+  .btn-danger{color:var(--danger);}
+  .btn-danger:hover{border-color:var(--danger);}
+  .btn-sm{padding:6px 11px;font-size:12px;}
+
+  .type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .type-tab{
+    font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.02em;padding:8px 13px;
+    border-radius:2px 2px 0 0;background:var(--surface);border:1px solid var(--border);border-bottom:none;
+    color:var(--text-dim);position:relative;top:1px;display:flex;align-items:center;gap:7px;
+  }
+  .type-tab .count{font-size:10px;color:var(--text-faint);background:var(--surface-2);padding:1px 5px;border-radius:8px;}
+  .type-tab.active{background:var(--bg);border-color:var(--border);color:var(--accent);border-bottom:1px solid var(--bg);}
+  .type-tab.active .count{background:var(--accent-soft);color:var(--accent);}
+  .type-tab:hover:not(.active){color:var(--text);}
+  .type-tab-add{
+    font-family:var(--font-mono);font-size:14px;color:var(--text-faint);padding:8px 10px;
+    border-radius:2px 2px 0 0;background:transparent;border:1px dashed var(--border);
+    border-bottom:none;position:relative;top:1px;
+  }
+  .type-tab-add:hover{color:var(--accent);border-color:var(--accent-soft);}
+  .tabs-underline{border-bottom:1px solid var(--border);margin-bottom:18px;}
+
+  .theme-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;align-items:center;}
+  .theme-filters .label{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;margin-right:4px;}
+  .chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);transition:all .15s;}
+  .chip:hover{border-color:var(--text-faint);color:var(--text);}
+  .chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px;}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;cursor:pointer;transition:transform .15s, border-color .15s, box-shadow .15s;
+    display:flex;flex-direction:column;
+  }
+  .card:hover{border-color:var(--text-faint);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.35);}
+  .card-image-wrap{position:relative;width:100%;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+  .card-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .img-loading{font-family:var(--font-mono);font-size:10px;color:var(--text-faint);}
+  .card-index{position:absolute;top:8px;left:8px;font-family:var(--font-mono);font-size:10px;background:rgba(18,19,25,0.78);color:var(--accent);padding:3px 7px;border-radius:2px;letter-spacing:0.04em;backdrop-filter:blur(4px);}
+  .card-theme-tag{position:absolute;top:8px;right:8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;background:rgba(18,19,25,0.78);color:var(--text);padding:4px 8px;border-radius:2px;backdrop-filter:blur(4px);}
+  .card-body{padding:13px 14px 14px;display:flex;flex-direction:column;gap:7px;flex:1;}
+  .card-title{font-family:var(--font-display);font-weight:600;font-size:14.5px;line-height:1.3;}
+  .card-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);letter-spacing:0.03em;}
+  .card-brief{font-size:12px;color:var(--text-dim);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .card-vocab{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
+  .vocab-pill{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border-soft);}
+
+  .empty-state{padding:80px 20px;text-align:center;color:var(--text-dim);border:1px dashed var(--border);border-radius:var(--radius);}
+  .empty-state svg{opacity:0.35;margin-bottom:16px;}
+  .empty-state h3{font-family:var(--font-display);font-size:17px;color:var(--text);margin-bottom:6px;font-weight:600;}
+  .empty-state p{font-size:13px;max-width:360px;margin:0 auto 18px;line-height:1.6;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(9,10,14,0.72);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:40px 20px;overflow-y:auto;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:100%;max-width:560px;animation:modalIn .16s ease-out;}
+  @keyframes modalIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+  .modal-header h2{font-family:var(--font-display);font-size:16px;font-weight:600;}
+  .modal-close{background:none;border:none;color:var(--text-dim);font-size:20px;line-height:1;padding:4px;}
+  .modal-close:hover{color:var(--text);}
+  .modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:16px;max-height:70vh;overflow-y:auto;}
+  .modal-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;align-items:center;}
+
+  .field-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint);display:block;margin-bottom:7px;}
+  .field-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius);font-size:13.5px;outline:none;transition:border-color .15s;}
+  .field-input:focus{border-color:var(--accent);}
+  textarea.field-input{resize:vertical;min-height:70px;line-height:1.5;}
+  .field-row{display:flex;gap:12px;}
+  .field-row > div{flex:1;}
+  .field-hint{font-size:11px;color:var(--text-faint);margin-top:5px;line-height:1.5;}
+
+  .image-source-toggle{display:flex;gap:6px;margin-bottom:10px;}
+  .toggle-btn{flex:1;padding:7px;font-size:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface-2);color:var(--text-dim);}
+  .toggle-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);}
+  .dropzone{border:1.5px dashed var(--border);border-radius:var(--radius);padding:26px 14px;text-align:center;color:var(--text-faint);font-size:12.5px;position:relative;transition:border-color .15s, background .15s;background:var(--surface-2);}
+  .dropzone.drag-over{border-color:var(--accent);background:var(--accent-soft);}
+  .dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .image-preview{width:100%;max-height:220px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+  .image-preview img{width:100%;height:100%;object-fit:contain;display:block;background:var(--surface-2);}
+
+  .vocab-input-wrap{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 8px;}
+  .vocab-input-wrap:focus-within{border-color:var(--accent);}
+  .vocab-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border-soft);padding:3px 4px 3px 9px;border-radius:12px;font-size:11.5px;color:var(--text);}
+  .vocab-chip button{background:none;border:none;color:var(--text-faint);font-size:13px;padding:2px 5px;}
+  .vocab-chip button:hover{color:var(--danger);}
+  .vocab-input-wrap input{flex:1;min-width:100px;background:none;border:none;outline:none;color:var(--text);font-size:12.5px;padding:4px;}
+
+  select.field-input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b8fa0'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+
+  .detail-modal{max-width:680px;}
+  .detail-image{width:100%;max-height:420px;object-fit:contain;background:var(--surface-2);border-bottom:1px solid var(--border);display:block;}
+  .detail-tags-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .detail-badge{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;padding:4px 9px;border-radius:2px;}
+  .badge-type{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);}
+  .badge-theme{background:var(--accent-soft);color:var(--accent-strong);border:1px solid var(--accent);}
+  .detail-brief{font-size:13.5px;line-height:1.7;color:var(--text);}
+  .detail-source{font-size:12px;color:var(--accent);text-decoration:none;word-break:break-all;}
+  .detail-source:hover{text-decoration:underline;}
+
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:var(--radius);font-size:12.5px;opacity:0;transition:all .2s;pointer-events:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:420px;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.error{border-color:var(--danger);color:var(--danger);}
+
+  .loading-screen{display:flex;align-items:center;justify-content:center;height:60vh;color:var(--text-faint);font-family:var(--font-mono);font-size:12px;letter-spacing:0.05em;}
+
+  .setup-wrap{max-width:520px;margin:60px auto;padding:0 16px;}
+  .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:28px 26px;}
+  .setup-card h2{font-family:var(--font-display);font-size:19px;margin-bottom:6px;}
+  .setup-card > p{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:22px;}
+  .setup-field{margin-bottom:14px;}
+  .setup-note{font-size:11.5px;color:var(--text-faint);line-height:1.6;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);}
+  .radio-row{display:flex;gap:10px;}
+  .radio-opt{flex:1;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);font-size:12px;color:var(--text-dim);cursor:pointer;text-align:center;}
+  .radio-opt.active{border-color:var(--accent);color:var(--accent-strong);background:var(--accent-soft);}
+
+  @media (max-width:640px){
+    #app{padding:18px 16px 60px;}
+    header.topbar{flex-direction:column;align-items:stretch;}
+    .search-box input{width:100%;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading-screen">LOADING ARCHIVE…</div></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULT_TYPES = ["Hero","Navigation","Buttons","Cards","Forms","Footer","Pricing","Testimonials","Features","CTA Sections","Other"];
+  var THEME_SUGGESTIONS = ["Minimalist","Brutalist","Glassmorphism","Neumorphism","Dark Mode","Maximalist","Editorial","Corporate","Playful","Retro / Vaporwave","Luxury","Organic","Cyberpunk","Swiss / International","Y2K","Neo-Brutalism","Skeuomorphic"];
+  var CONFIG_KEY = "specimen_gh_config";
+  var DATA_PATH = "data/library.json";
+
+  var state = {
+    items: [], customTypes: [], dataSha: null,
+    activeType: "All", activeTheme: "All", search: "",
+    loading: true, syncStatus: "idle",
+    config: null, connected: false,
+    modal: null, editingItem: null, detailItem: null,
+    formImageMode: "upload", formImageData: "", formImageIsNew: false, formVocab: [],
+    setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""},
+    imageBlobCache: {}
+  };
+
+  function b64Encode(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(m,p1){ return String.fromCharCode('0x'+p1); }));
+  }
+  function b64Decode(str){
+    return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(function(c){
+      return '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  }
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
+  }
+  function allTypes(){ return DEFAULT_TYPES.concat(state.customTypes); }
+  function showToast(msg, isError){
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.className = isError ? "show error" : "show";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ t.className = ""; }, 3800);
+  }
+
+  function ghHeaders(extra){
+    var h = {
+      "Authorization": "Bearer " + state.config.token,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    };
+    if(extra) for(var k in extra) h[k] = extra[k];
+    return h;
+  }
+  function repoBase(){ return "/repos/" + state.config.owner + "/" + state.config.repo; }
+
+  async function ghGetFile(path){
+    var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(state.config.branch), { headers: ghHeaders() });
+    if(res.status === 404) return null;
+    if(!res.ok) throw new Error("GitHub read failed (" + res.status + ")");
+    return res.json();
+  }
+  async function ghPutFile(path, base64Content, message, sha){
+    var body = { message: message, content: base64Content, branch: state.config.branch };
+    if(sha) body.sha = sha;
+    var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path, {
+      method: "PUT", headers: ghHeaders({"Content-Type":"application/json"}), body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      var err = await res.json().catch(function(){return {};});
+      throw new Error(err.message || ("GitHub write failed (" + res.status + ")"));
+    }
+    return res.json();
+  }
+  async function ghDeleteFile(path, sha, message){
+    try{
+      var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path, {
+        method: "DELETE", headers: ghHeaders({"Content-Type":"application/json"}),
+        body: JSON.stringify({ message: message, sha: sha, branch: state.config.branch })
+      });
+      return res.ok;
+    }catch(e){ return false; }
+  }
+
+  async function loadLibraryFromGitHub(){
+    var file = await ghGetFile(DATA_PATH);
+    if(file){
+      var jsonStr = b64Decode(file.content);
+      var parsed = JSON.parse(jsonStr);
+      state.items = parsed.items || [];
+      state.customTypes = parsed.customTypes || [];
+      state.dataSha = file.sha;
+    } else {
+      state.items = []; state.customTypes = [];
+      var initial = b64Encode(JSON.stringify({items:[], customTypes:[]}, null, 2));
+      var created = await ghPutFile(DATA_PATH, initial, "Initialize design library", null);
+      state.dataSha = created.content.sha;
+    }
+  }
+
+  async function saveLibraryToGitHub(message){
+    state.syncStatus = "syncing"; render();
+    try{
+      var latest = await ghGetFile(DATA_PATH);
+      var sha = latest ? latest.sha : state.dataSha;
+      var content = b64Encode(JSON.stringify({items: state.items, customTypes: state.customTypes}, null, 2));
+      var result = await ghPutFile(DATA_PATH, content, message || "Update library", sha);
+      state.dataSha = result.content.sha;
+      state.syncStatus = "ok";
+    }catch(e){
+      state.syncStatus = "error";
+      showToast("Sync failed: " + e.message, true);
+    }
+    render();
+  }
+
+  async function uploadImageToGitHub(dataUrl, idHint){
+    var match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
+    if(!match) throw new Error("Invalid image data");
+    var ext = match[1] === "image/png" ? "png" : "jpg";
+    var base64 = match[2];
+    var filename = "images/" + idHint + "." + ext;
+    await ghPutFile(filename, base64, "Add image " + filename, null);
+    return filename;
+  }
+
+  function resolveImageSrc(path){
+    if(!path) return "";
+    if(path.indexOf("http") === 0 || path.indexOf("data:") === 0) return path;
+    if(state.config.visibility === "public"){
+      return "https://raw.githubusercontent.com/" + state.config.owner + "/" + state.config.repo + "/" + state.config.branch + "/" + path;
+    }
+    if(state.imageBlobCache[path] && state.imageBlobCache[path] !== "pending") return state.imageBlobCache[path];
+    fetchPrivateImage(path);
+    return "";
+  }
+
+  async function fetchPrivateImage(path){
+    if(state.imageBlobCache[path] === "pending") return;
+    state.imageBlobCache[path] = "pending";
+    try{
+      var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(state.config.branch), {
+        headers: ghHeaders({"Accept":"application/vnd.github.raw+json"})
+      });
+      if(!res.ok) throw new Error("image fetch failed");
+      var blob = await res.blob();
+      state.imageBlobCache[path] = URL.createObjectURL(blob);
+      render();
+    }catch(e){
+      delete state.imageBlobCache[path];
+    }
+  }
+
+  function resizeImageFile(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = function(e){
+        var img = new Image();
+        img.onerror = reject;
+        img.onload = function(){
+          var maxW = 1000;
+          var scale = Math.min(1, maxW / img.width);
+          var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function resizeImageFromBlob(blob){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("decode failed")); };
+      img.onload = function(){
+        var maxW = 1000;
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        try{ resolve(canvas.toDataURL("image/jpeg", 0.85)); }
+        catch(e){ reject(e); }
+      };
+      img.src = url;
+    });
+  }
+
+  function filteredItems(){
+    return state.items.filter(function(it){
+      if(state.activeType !== "All" && it.elementType !== state.activeType) return false;
+      if(state.activeTheme !== "All" && it.theme !== state.activeTheme) return false;
+      if(state.search){
+        var q = state.search.toLowerCase();
+        var hay = [it.title, it.brief, it.theme, it.elementType].concat(it.vocabulary||[]).join(" ").toLowerCase();
+        if(hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+  function typeCounts(){
+    var counts = {};
+    state.items.forEach(function(it){ counts[it.elementType] = (counts[it.elementType]||0) + 1; });
+    return counts;
+  }
+  function themesForActiveType(){
+    var pool = state.activeType === "All" ? state.items : state.items.filter(function(it){ return it.elementType === state.activeType; });
+    var set = {};
+    pool.forEach(function(it){ if(it.theme) set[it.theme] = true; });
+    return Object.keys(set).sort();
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    if(state.loading){ app.innerHTML = '<div class="loading-screen">LOADING ARCHIVE…</div>'; return; }
+    if(!state.connected){ app.innerHTML = renderSetupScreen(); bindSetupEvents(); return; }
+
+    var html = "";
+    html += renderHeader();
+    html += renderTabs();
+    html += renderThemeFilters();
+    html += renderGrid();
+    app.innerHTML = html;
+
+    bindHeaderEvents(); bindTabEvents(); bindThemeChipEvents(); bindCardEvents();
+    if(state.modal) renderModal();
+  }
+
+  function renderSetupScreen(){
+    var f = state.setupForm;
+    return '' +
+    '<div class="setup-wrap"><div class="setup-card">' +
+      '<h2>Connect your GitHub repo</h2>' +
+      '<p>Your library data and screenshots will be read and written directly to a repo you control. Nothing is stored anywhere except that repo and this browser\'s local storage (for your token).</p>' +
+      '<div class="setup-field"><span class="field-label">Repo owner (your GitHub username)</span>' +
+      '<input class="field-input" id="su_owner" placeholder="e.g. janedoe" value="' + escapeHtml(f.owner) + '"></div>' +
+      '<div class="setup-field"><span class="field-label">Repository name</span>' +
+      '<input class="field-input" id="su_repo" placeholder="e.g. design-library" value="' + escapeHtml(f.repo) + '"></div>' +
+      '<div class="setup-field"><span class="field-label">Branch</span>' +
+      '<input class="field-input" id="su_branch" placeholder="main" value="' + escapeHtml(f.branch) + '"></div>' +
+      '<div class="setup-field"><span class="field-label">Repository visibility</span>' +
+      '<div class="radio-row">' +
+        '<div class="radio-opt' + (f.visibility==='public'?' active':'') + '" data-vis="public">Public</div>' +
+        '<div class="radio-opt' + (f.visibility==='private'?' active':'') + '" data-vis="private">Private</div>' +
+      '</div></div>' +
+      '<div class="setup-field"><span class="field-label">Fine-grained personal access token</span>' +
+      '<input class="field-input" id="su_token" type="password" placeholder="github_pat_…" value="' + escapeHtml(f.token) + '"></div>' +
+      '<button class="btn btn-primary" id="su_connect" style="width:100%;justify-content:center;">Connect</button>' +
+      '<div class="setup-note">Token needs only <strong>Contents: Read and write</strong> permission, scoped to this one repo. It\'s saved solely in this browser\'s local storage — never sent anywhere but api.github.com.</div>' +
+    '</div></div>';
+  }
+
+  function bindSetupEvents(){
+    var f = state.setupForm;
+    ["su_owner","su_repo","su_branch","su_token"].forEach(function(id){
+      var el = document.getElementById(id);
+      el.addEventListener("input", function(e){
+        var key = {su_owner:"owner", su_repo:"repo", su_branch:"branch", su_token:"token"}[id];
+        f[key] = e.target.value;
+      });
+    });
+    document.querySelectorAll(".radio-opt").forEach(function(el){
+      el.addEventListener("click", function(){ f.visibility = el.getAttribute("data-vis"); render(); });
+    });
+    document.getElementById("su_connect").addEventListener("click", handleConnect);
+  }
+
+  async function handleConnect(){
+    var f = state.setupForm;
+    var owner = f.owner.trim(), repo = f.repo.trim(), branch = (f.branch||"main").trim() || "main", token = f.token.trim();
+    if(!owner || !repo || !token){ showToast("Fill in owner, repo, and token.", true); return; }
+    var btn = document.getElementById("su_connect");
+    btn.textContent = "Connecting…"; btn.disabled = true;
+
+    state.config = { owner: owner, repo: repo, branch: branch, visibility: f.visibility, token: token };
+    try{
+      var res = await fetch("https://api.github.com" + repoBase(), { headers: ghHeaders() });
+      if(!res.ok){
+        throw new Error(res.status === 404 ? "Repo not found — check owner/repo, and that the token has access to it." : "Couldn't authenticate (" + res.status + "). Check your token's permissions.");
+      }
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(state.config));
+      state.connected = true; state.loading = true; render();
+      await loadLibraryFromGitHub();
+      state.loading = false;
+      showToast("Connected to " + owner + "/" + repo + ".");
+      render();
+    }catch(e){
+      state.connected = false;
+      showToast(e.message, true);
+      btn.textContent = "Connect"; btn.disabled = false;
+    }
+  }
+
+  function disconnect(){
+    if(!confirm("Disconnect this browser from the repo? Your data stays safe on GitHub — you can reconnect anytime.")) return;
+    localStorage.removeItem(CONFIG_KEY);
+    state.config = null; state.connected = false; state.items = []; state.customTypes = [];
+    state.setupForm = {owner:"", repo:"", branch:"main", visibility:"public", token:""};
+    render();
+  }
+
+  function renderHeader(){
+    var total = state.items.length;
+    var dotClass = state.syncStatus === "syncing" ? "syncing" : (state.syncStatus === "error" ? "err" : "");
+    var statusText = state.syncStatus === "syncing" ? "syncing…" : (state.syncStatus === "error" ? "sync error" : (state.config.owner + "/" + state.config.repo));
+    return '' +
+    '<header class="topbar">' +
+      '<div class="brand">' +
+        '<span class="brand-mark">Archive</span>' +
+        '<div><h1>Specimen</h1><div class="brand-sub"><span class="sync-dot ' + dotClass + '"></span>' + escapeHtml(statusText) + ' · ' + total + ' element' + (total===1?'':'s') + '</div></div>' +
+      '</div>' +
+      '<div class="topbar-actions">' +
+        '<div class="search-box">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+          '<input id="searchInput" type="text" placeholder="Search title, theme, vocabulary…" value="' + escapeHtml(state.search) + '">' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm" id="refreshBtn" title="Pull latest from GitHub">↻ Refresh</button>' +
+        '<button class="btn btn-primary" id="addBtn">+ Add design</button>' +
+        '<button class="btn btn-ghost btn-sm" id="disconnectBtn">Disconnect</button>' +
+      '</div>' +
+    '</header>';
+  }
+
+  function renderTabs(){
+    var counts = typeCounts();
+    var types = ["All"].concat(allTypes());
+    var tabsHtml = types.map(function(t){
+      var cnt = t === "All" ? state.items.length : (counts[t] || 0);
+      var active = state.activeType === t;
+      return '<button class="type-tab' + (active?' active':'') + '" data-type="' + escapeHtml(t) + '">' + escapeHtml(t) + '<span class="count">' + cnt + '</span></button>';
+    }).join("");
+    tabsHtml += '<button class="type-tab-add" id="addTypeBtn" title="Add custom category">+</button>';
+    return '<div class="type-tabs">' + tabsHtml + '</div><div class="tabs-underline"></div>';
+  }
+
+  function renderThemeFilters(){
+    var themes = themesForActiveType();
+    if(themes.length === 0) return "";
+    var chips = '<span class="label">Theme</span>';
+    chips += '<button class="chip' + (state.activeTheme==="All"?' active':'') + '" data-theme="All">All</button>';
+    themes.forEach(function(th){
+      chips += '<button class="chip' + (state.activeTheme===th?' active':'') + '" data-theme="' + escapeHtml(th) + '">' + escapeHtml(th) + '</button>';
+    });
+    return '<div class="theme-filters">' + chips + '</div>';
+  }
+
+  function cardImageHtml(it){
+    var src = resolveImageSrc(it.image);
+    if(it.image && !src) return '<span class="img-loading">loading…</span>';
+    if(!src) return '';
+    return '<img src="' + src.replace(/"/g,'&quot;') + '" alt="' + escapeHtml(it.title) + '" loading="lazy">';
+  }
+
+  function renderGrid(){
+    var items = filteredItems();
+    if(state.items.length === 0){
+      return '<div class="empty-state">' +
+        '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="18" height="14" rx="1"/><path d="M3 13l4-4 3 3 5-6 6 7"/><circle cx="8" cy="8" r="1"/></svg>' +
+        '<h3>Your archive is empty</h3>' +
+        '<p>Start collecting hero sections, nav bars, buttons and more. Everything you add is committed straight to your GitHub repo.</p>' +
+        '<button class="btn btn-primary" id="emptyAddBtn">+ Add your first design</button>' +
+      '</div>';
+    }
+    if(items.length === 0){
+      return '<div class="empty-state"><h3>No matches</h3><p>Nothing fits the current filters. Try a different category, theme, or search term.</p></div>';
+    }
+    var cards = items.map(function(it){
+      var indexLabel = "SPEC." + String(state.items.indexOf(it)+1).padStart(3,"0");
+      var vocabHtml = (it.vocabulary||[]).slice(0,4).map(function(v){ return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
+      return '<div class="card" data-id="' + it.id + '">' +
+        '<div class="card-image-wrap">' + cardImageHtml(it) +
+          '<span class="card-index">' + indexLabel + '</span>' +
+          (it.theme ? '<span class="card-theme-tag">' + escapeHtml(it.theme) + '</span>' : '') +
+        '</div>' +
+        '<div class="card-body">' +
+          '<div class="card-title">' + escapeHtml(it.title || "Untitled") + '</div>' +
+          '<div class="card-meta">' + escapeHtml(it.elementType) + '</div>' +
+          (it.brief ? '<div class="card-brief">' + escapeHtml(it.brief) + '</div>' : '') +
+          (vocabHtml ? '<div class="card-vocab">' + vocabHtml + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join("");
+    return '<div class="grid">' + cards + '</div>';
+  }
+
+  function bindHeaderEvents(){
+    var search = document.getElementById("searchInput");
+    if(search){
+      search.addEventListener("input", function(e){
+        state.search = e.target.value;
+        var pos = e.target.selectionStart;
+        render();
+        var again = document.getElementById("searchInput");
+        if(again){ again.focus(); again.setSelectionRange(pos, pos); }
+      });
+    }
+    var addBtn = document.getElementById("addBtn");
+    if(addBtn) addBtn.addEventListener("click", openAddModal);
+    var emptyAddBtn = document.getElementById("emptyAddBtn");
+    if(emptyAddBtn) emptyAddBtn.addEventListener("click", openAddModal);
+    var refreshBtn = document.getElementById("refreshBtn");
+    if(refreshBtn) refreshBtn.addEventListener("click", async function(){
+      state.loading = true; render();
+      try{ await loadLibraryFromGitHub(); showToast("Synced with GitHub."); }
+      catch(e){ showToast("Refresh failed: " + e.message, true); }
+      state.loading = false; render();
+    });
+    var disconnectBtn = document.getElementById("disconnectBtn");
+    if(disconnectBtn) disconnectBtn.addEventListener("click", disconnect);
+  }
+
+  function bindTabEvents(){
+    document.querySelectorAll(".type-tab").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.activeType = btn.getAttribute("data-type"); state.activeTheme = "All"; render();
+      });
+    });
+    var addTypeBtn = document.getElementById("addTypeBtn");
+    if(addTypeBtn) addTypeBtn.addEventListener("click", function(){
+      var name = prompt("New category name (e.g. 'Modals', 'Onboarding'):");
+      if(name && name.trim()){
+        name = name.trim();
+        if(allTypes().indexOf(name) === -1){ state.customTypes.push(name); saveLibraryToGitHub("Add category: " + name); }
+        state.activeType = name; render();
+      }
+    });
+  }
+
+  function bindThemeChipEvents(){
+    document.querySelectorAll(".chip").forEach(function(chip){
+      chip.addEventListener("click", function(){ state.activeTheme = chip.getAttribute("data-theme"); render(); });
+    });
+  }
+
+  function bindCardEvents(){
+    document.querySelectorAll(".card").forEach(function(card){
+      card.addEventListener("click", function(){
+        var id = card.getAttribute("data-id");
+        var item = state.items.find(function(it){ return it.id === id; });
+        if(item){ state.detailItem = item; state.modal = "detail"; render(); }
+      });
+    });
+  }
+
+  function openAddModal(){
+    state.editingItem = null; state.formImageMode = "upload"; state.formImageData = ""; state.formImageIsNew = false;
+    state.formVocab = []; state.modal = "add"; render();
+  }
+  function openEditModal(item){
+    state.editingItem = item; state.formImageMode = "url";
+    state.formImageData = resolveImageSrc(item.image) || item.image || "";
+    state.formImageIsNew = false;
+    state.formVocab = (item.vocabulary || []).slice();
+    state.modal = "edit"; state.detailItem = null; render();
+  }
+  function closeModal(){ state.modal = null; state.editingItem = null; state.detailItem = null; render(); }
+
+  function renderModal(){
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay"; overlay.id = "modalOverlay";
+    overlay.innerHTML = state.modal === "detail" ? renderDetailModal(state.detailItem) : renderFormModal();
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
+    if(state.modal === "detail") bindDetailModalEvents(overlay); else bindFormModalEvents(overlay);
+  }
+
+  function renderDetailModal(it){
+    if(!it) return "";
+    var vocabHtml = (it.vocabulary||[]).map(function(v){ return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
+    var src = resolveImageSrc(it.image);
+    return '' +
+    '<div class="modal detail-modal">' +
+      '<div class="modal-header"><h2>' + escapeHtml(it.title || "Untitled") + '</h2><button class="modal-close" id="closeDetail">&times;</button></div>' +
+      (src ? '<img class="detail-image" src="' + src.replace(/"/g,'&quot;') + '" alt="">' : '') +
+      '<div class="modal-body">' +
+        '<div class="detail-tags-row">' +
+          '<span class="detail-badge badge-type">' + escapeHtml(it.elementType) + '</span>' +
+          (it.theme ? '<span class="detail-badge badge-theme">' + escapeHtml(it.theme) + '</span>' : '') +
+        '</div>' +
+        (it.brief ? '<div class="detail-brief">' + escapeHtml(it.brief) + '</div>' : '') +
+        (vocabHtml ? '<div><div class="field-label">Vocabulary</div><div class="card-vocab">' + vocabHtml + '</div></div>' : '') +
+        (it.sourceUrl ? '<div><div class="field-label">Source</div><a class="detail-source" href="' + escapeHtml(it.sourceUrl) + '" target="_blank" rel="noopener">' + escapeHtml(it.sourceUrl) + '</a></div>' : '') +
+      '</div>' +
+      '<div class="modal-footer">' +
+        '<button class="btn btn-danger" id="deleteItemBtn">Delete</button>' +
+        '<button class="btn" id="editItemBtn">Edit</button>' +
+        '<button class="btn btn-primary" id="closeDetailBtn">Close</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function bindDetailModalEvents(overlay){
+    overlay.querySelector("#closeDetail").addEventListener("click", closeModal);
+    overlay.querySelector("#closeDetailBtn").addEventListener("click", closeModal);
+    overlay.querySelector("#editItemBtn").addEventListener("click", function(){ openEditModal(state.detailItem); });
+    overlay.querySelector("#deleteItemBtn").addEventListener("click", async function(){
+      if(!confirm("Delete this item from your archive? This can't be undone.")) return;
+      var target = state.detailItem;
+      state.items = state.items.filter(function(it){ return it.id !== target.id; });
+      closeModal();
+      await saveLibraryToGitHub("Delete: " + target.title);
+      if(target.image && target.image.indexOf("images/") === 0){
+        try{
+          var f = await ghGetFile(target.image);
+          if(f) await ghDeleteFile(target.image, f.sha, "Remove image for deleted item: " + target.title);
+        }catch(e){ /* best effort */ }
+      }
+      showToast("Item deleted.");
+    });
+  }
+
+  function renderFormModal(){
+    var isEdit = state.modal === "edit";
+    var it = state.editingItem || {};
+    var typeOptions = allTypes().map(function(t){
+      return '<option value="' + escapeHtml(t) + '"' + (it.elementType===t?' selected':'') + '>' + escapeHtml(t) + '</option>';
+    }).join("");
+    var vocabChips = state.formVocab.map(function(v, i){
+      return '<span class="vocab-chip">' + escapeHtml(v) + '<button type="button" data-vocab-index="' + i + '">&times;</button></span>';
+    }).join("");
+    var themeDatalist = Array.from(new Set(THEME_SUGGESTIONS.concat(state.items.map(function(x){return x.theme;}).filter(Boolean))));
+    var themeOptionsHtml = themeDatalist.map(function(t){ return '<option value="' + escapeHtml(t) + '">'; }).join("");
+
+    var imgSectionHtml;
+    if(state.formImageMode === "upload"){
+      imgSectionHtml = '<div class="dropzone" id="dropzone">' +
+        (state.formImageData ? '<div class="image-preview"><img src="' + state.formImageData.replace(/"/g,'&quot;') + '"></div>' : 'Drag &amp; drop an image, or click to browse') +
+        '<input type="file" id="fileInput" accept="image/*">' +
+      '</div>';
+    } else {
+      var urlVal = (state.formImageData && state.formImageData.indexOf("data:") !== 0) ? state.formImageData : "";
+      imgSectionHtml = '<input class="field-input" id="urlInput" type="text" placeholder="https://…" value="' + escapeHtml(urlVal) + '">' +
+        (urlVal ? '<div class="image-preview" style="margin-top:8px;"><img src="' + urlVal.replace(/"/g,'&quot;') + '" onerror="this.parentElement.style.display=\'none\'"></div>' : '');
+    }
+
+    return '' +
+    '<div class="modal">' +
+      '<div class="modal-header"><h2>' + (isEdit ? "Edit design" : "Add a design") + '</h2><button class="modal-close" id="closeForm">&times;</button></div>' +
+      '<div class="modal-body">' +
+        '<div>' +
+          '<span class="field-label">Screenshot</span>' +
+          '<div class="image-source-toggle">' +
+            '<button type="button" class="toggle-btn' + (state.formImageMode==="upload"?' active':'') + '" data-mode="upload">Upload file</button>' +
+            '<button type="button" class="toggle-btn' + (state.formImageMode==="url"?' active':'') + '" data-mode="url">Paste URL</button>' +
+          '</div>' +
+          imgSectionHtml +
+          '<div class="field-hint">Uploads and URLs are both committed to your repo as real image files when possible. If a source blocks downloading, we\'ll link to it live instead and let you know.</div>' +
+        '</div>' +
+        '<div><span class="field-label">Title</span>' +
+          '<input class="field-input" id="titleInput" type="text" placeholder="e.g. Split-screen hero with video bg" value="' + escapeHtml(it.title || "") + '"></div>' +
+        '<div class="field-row">' +
+          '<div><span class="field-label">Element type</span><select class="field-input" id="typeInput">' + typeOptions + '</select></div>' +
+          '<div><span class="field-label">Theme</span><input class="field-input" id="themeInput" list="themeList" placeholder="e.g. Brutalist" value="' + escapeHtml(it.theme || "") + '"><datalist id="themeList">' + themeOptionsHtml + '</datalist></div>' +
+        '</div>' +
+        '<div><span class="field-label">Brief</span><textarea class="field-input" id="briefInput" placeholder="What makes this work — layout, spacing, contrast, motion…">' + escapeHtml(it.brief || "") + '</textarea></div>' +
+        '<div><span class="field-label">Vocabulary</span><div class="vocab-input-wrap" id="vocabWrap">' + vocabChips + '<input type="text" id="vocabInput" placeholder="Type a term, press Enter…"></div>' +
+          '<div class="field-hint">e.g. asymmetric grid, kinetic type, oversized ghost button</div></div>' +
+        '<div><span class="field-label">Source link (optional)</span><input class="field-input" id="sourceInput" type="text" placeholder="https://…" value="' + escapeHtml(it.sourceUrl || "") + '"></div>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+        '<span class="field-hint" id="formStatus"></span>' +
+        '<button class="btn" id="cancelForm">Cancel</button>' +
+        '<button class="btn btn-primary" id="saveForm">' + (isEdit ? "Save changes" : "Add to archive") + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function bindFormModalEvents(overlay){
+    overlay.querySelector("#closeForm").addEventListener("click", closeModal);
+    overlay.querySelector("#cancelForm").addEventListener("click", closeModal);
+
+    overlay.querySelectorAll(".toggle-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ state.formImageMode = btn.getAttribute("data-mode"); render(); });
+    });
+
+    if(state.formImageMode === "upload"){
+      var dropzone = overlay.querySelector("#dropzone");
+      var fileInput = overlay.querySelector("#fileInput");
+      fileInput.addEventListener("change", function(e){ if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]); });
+      dropzone.addEventListener("dragover", function(e){ e.preventDefault(); dropzone.classList.add("drag-over"); });
+      dropzone.addEventListener("dragleave", function(){ dropzone.classList.remove("drag-over"); });
+      dropzone.addEventListener("drop", function(e){
+        e.preventDefault(); dropzone.classList.remove("drag-over");
+        if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+    } else {
+      var urlInput = overlay.querySelector("#urlInput");
+      if(urlInput){
+        urlInput.addEventListener("input", function(e){ state.formImageData = e.target.value; state.formImageIsNew = true; });
+        urlInput.addEventListener("blur", function(){ render(); });
+      }
+    }
+
+    async function handleFile(file){
+      if(!file.type.startsWith("image/")){ showToast("Please choose an image file.", true); return; }
+      try{
+        var dataUrl = await resizeImageFile(file);
+        state.formImageData = dataUrl; state.formImageIsNew = true;
+        render();
+      }catch(err){ showToast("Couldn't read that image.", true); }
+    }
+
+    var vocabInput = overlay.querySelector("#vocabInput");
+    vocabInput.addEventListener("keydown", function(e){
+      if(e.key === "Enter" || e.key === ","){
+        e.preventDefault();
+        var val = vocabInput.value.trim().replace(/,$/, "");
+        if(val && state.formVocab.indexOf(val) === -1){ state.formVocab.push(val); render(); focusVocabInput(); }
+        else vocabInput.value = "";
+      } else if(e.key === "Backspace" && vocabInput.value === "" && state.formVocab.length){
+        state.formVocab.pop(); render(); focusVocabInput();
+      }
+    });
+    overlay.querySelectorAll("[data-vocab-index]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.formVocab.splice(parseInt(btn.getAttribute("data-vocab-index"),10), 1); render();
+      });
+    });
+
+    overlay.querySelector("#saveForm").addEventListener("click", handleSave);
+  }
+
+  function focusVocabInput(){
+    var el = document.getElementById("modalOverlay");
+    if(el){ var input = el.querySelector("#vocabInput"); if(input) input.focus(); }
+  }
+
+  async function handleSave(){
+    var overlay = document.getElementById("modalOverlay");
+    var saveBtn = overlay.querySelector("#saveForm");
+    var statusEl = overlay.querySelector("#formStatus");
+    var title = overlay.querySelector("#titleInput").value.trim();
+    var elementType = overlay.querySelector("#typeInput").value;
+    var theme = overlay.querySelector("#themeInput").value.trim();
+    var brief = overlay.querySelector("#briefInput").value.trim();
+    var sourceUrl = overlay.querySelector("#sourceInput").value.trim();
+
+    if(!title){ showToast("Give it a title first.", true); overlay.querySelector("#titleInput").focus(); return; }
+
+    saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+    var itemId = state.editingItem ? state.editingItem.id : uid();
+    var imagePath = state.editingItem ? state.editingItem.image : "";
+    var previousImage = state.editingItem ? state.editingItem.image : "";
+
+    try{
+      if(state.formImageMode === "upload" && state.formImageIsNew && state.formImageData){
+        statusEl.textContent = "Uploading image…";
+        imagePath = await uploadImageToGitHub(state.formImageData, itemId);
+      } else if(state.formImageMode === "url"){
+        var urlVal = overlay.querySelector("#urlInput") ? overlay.querySelector("#urlInput").value.trim() : "";
+        if(urlVal && urlVal !== previousImage){
+          statusEl.textContent = "Fetching image…";
+          try{
+            var res = await fetch(urlVal, {mode:"cors"});
+            if(!res.ok) throw new Error("fetch failed");
+            var blob = await res.blob();
+            var resized = await resizeImageFromBlob(blob);
+            statusEl.textContent = "Uploading image…";
+            imagePath = await uploadImageToGitHub(resized, itemId);
+          }catch(imgErr){
+            imagePath = urlVal;
+            showToast("Couldn't save a local copy of that image (source blocked it) — linked to the live URL instead.", true);
+          }
+        } else if(urlVal){
+          imagePath = urlVal;
+        }
+      }
+
+      statusEl.textContent = "Saving to GitHub…";
+
+      if(state.modal === "edit" && state.editingItem){
+        state.editingItem.title = title; state.editingItem.elementType = elementType;
+        state.editingItem.theme = theme; state.editingItem.brief = brief;
+        state.editingItem.sourceUrl = sourceUrl; state.editingItem.image = imagePath;
+        state.editingItem.vocabulary = state.formVocab.slice();
+        await saveLibraryToGitHub("Update: " + title);
+      } else {
+        state.items.unshift({
+          id: itemId, title: title, elementType: elementType, theme: theme, brief: brief,
+          sourceUrl: sourceUrl, image: imagePath, vocabulary: state.formVocab.slice(), createdAt: Date.now()
+        });
+        await saveLibraryToGitHub("Add: " + title);
+      }
+
+      showToast(state.modal === "edit" ? "Changes saved to GitHub." : "Added to archive.");
+      closeModal();
+    }catch(e){
+      showToast("Couldn't save: " + e.message, true);
+      saveBtn.disabled = false; saveBtn.textContent = state.modal === "edit" ? "Save changes" : "Add to archive";
+      if(statusEl) statusEl.textContent = "";
+    }
+  }
+
+  async function init(){
+    var saved = localStorage.getItem(CONFIG_KEY);
+    if(saved){
+      try{ state.config = JSON.parse(saved); state.connected = true; }catch(e){}
+    }
+    if(state.connected){
+      try{ await loadLibraryFromGitHub(); }
+      catch(e){ showToast("Couldn't sync with GitHub: " + e.message, true); }
+    }
+    state.loading = false;
+    render();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
