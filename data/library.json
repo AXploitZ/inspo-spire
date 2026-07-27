@@ -1,19 +1,6 @@
 {
   "items": [
     {
-      "id": "ms3e9kx0oz5xps",
-      "title": "Zentry Duped",
-      "elementType": "Hero",
-      "theme": "Retro / Vaporwave",
-      "brief": "test the larger brief after alredy testing. Dups are happening",
-      "sourceUrl": "https://zentry.com/",
-      "image": "images/ms3e9kx0oz5xps.jpg",
-      "vocabulary": [
-        "testter"
-      ],
-      "createdAt": 1785166877865
-    },
-    {
       "id": "ms3e4lbhcfzu23",
       "title": "Zentry",
       "elementType": "Hero",
