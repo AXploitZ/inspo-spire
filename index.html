@@ -356,7 +356,7 @@
     app.innerHTML = html;
 
     bindHeaderEvents(); bindTabEvents(); bindThemeChipEvents(); bindCardEvents();
-    if(state.modal) renderModal();
+    if(state.modal && !state.saving) renderModal();
   }
 
   function renderSetupScreen(){
