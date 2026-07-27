@@ -237,7 +237,7 @@
     activeType: "All", activeTheme: "All", search: "",
     loading: true, syncStatus: "idle",
     config: null, connected: false,
-    modal: null, editingItem: null, detailItem: null,
+    modal: null, editingItem: null, detailItem: null, saving: false,
     formImageMode: "upload", formImageData: "", formImageIsNew: false, formVocab: [],
     setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""}
   };
@@ -599,7 +599,7 @@
     state.formVocab = (item.vocabulary || []).slice();
     state.modal = "edit"; state.detailItem = null; render();
   }
-  function closeModal(){ state.modal = null; state.editingItem = null; state.detailItem = null; Modal.close(); }
+  function closeModal(){ Modal.close(); }
 
   function renderModal(){
     var html = state.modal === "detail" ? renderDetailModal(state.detailItem) : renderFormModal();
@@ -607,7 +607,7 @@
       onBind: function(overlay){
         if(state.modal === "detail") bindDetailModalEvents(overlay); else bindFormModalEvents(overlay);
       },
-      onClose: function(){ state.modal = null; state.editingItem = null; state.detailItem = null; }
+      onClose: function(){ if(!state.saving){ state.modal = null; state.editingItem = null; state.detailItem = null; } }
     });
   }
 
@@ -778,7 +778,7 @@
 
     if(!title){ showToast("Give it a title first.", true); overlay.querySelector("#titleInput").focus(); return; }
 
-    saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+    saveBtn.disabled = true; saveBtn.textContent = "Saving…"; state.saving = true;
     var itemId = state.editingItem ? state.editingItem.id : uid();
     var imagePath = state.editingItem ? state.editingItem.image : "";
     var previousImage = state.editingItem ? state.editingItem.image : "";
@@ -824,8 +824,10 @@
       }
 
       showToast(state.modal === "edit" ? "Changes saved to GitHub." : "Added to archive.");
+      state.saving = false;
       closeModal();
     }catch(e){
+      state.saving = false;
       showToast("Couldn't save: " + e.message, true);
       saveBtn.disabled = false; saveBtn.textContent = state.modal === "edit" ? "Save changes" : "Add to archive";
       if(statusEl) statusEl.textContent = "";
