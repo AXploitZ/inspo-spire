@@ -71,6 +71,12 @@
   }
   .search-box input:focus{border-color:var(--accent);}
   .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.5;width:14px;height:14px;}
+  .search-clear{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--text-faint);font-size:16px;
+    line-height:1;padding:2px 4px;cursor:pointer;
+  }
+  .search-clear:hover{color:var(--text);}
 
   .btn{
     display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--radius);
@@ -186,6 +192,13 @@
   #toast.error{border-color:var(--danger);color:var(--danger);}
 
   .loading-screen{display:flex;align-items:center;justify-content:center;height:60vh;color:var(--text-faint);font-family:var(--font-mono);font-size:12px;letter-spacing:0.05em;}
+  .skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px;padding:0 32px;}
+  .skeleton-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .skeleton-img{width:100%;aspect-ratio:4/3;background:var(--surface-2);animation:pulse 1.5s infinite;}
+  .skeleton-body{padding:13px 14px 14px;display:flex;flex-direction:column;gap:8px;}
+  .skeleton-line{height:12px;background:var(--surface-2);border-radius:2px;animation:pulse 1.5s infinite;}
+  .skeleton-line.short{width:60%;}
+  .skeleton-line.tiny{width:40%;height:10px;}
 
   .setup-wrap{max-width:520px;margin:60px auto;padding:0 16px;}
   .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:28px 26px;}
@@ -209,6 +222,8 @@
 <div id="app"><div class="loading-screen">LOADING ARCHIVE…</div></div>
 <div id="toast"></div>
 
+<script src="js/gh.js"></script>
+<script src="js/modal.js"></script>
 <script>
 (function(){
   "use strict";
@@ -216,27 +231,16 @@
   var DEFAULT_TYPES = ["Hero","Navigation","Buttons","Cards","Forms","Footer","Pricing","Testimonials","Features","CTA Sections","Other"];
   var THEME_SUGGESTIONS = ["Minimalist","Brutalist","Glassmorphism","Neumorphism","Dark Mode","Maximalist","Editorial","Corporate","Playful","Retro / Vaporwave","Luxury","Organic","Cyberpunk","Swiss / International","Y2K","Neo-Brutalism","Skeuomorphic"];
   var CONFIG_KEY = "specimen_gh_config";
-  var DATA_PATH = "data/library.json";
 
   var state = {
-    items: [], customTypes: [], dataSha: null,
+    items: [], customTypes: [],
     activeType: "All", activeTheme: "All", search: "",
     loading: true, syncStatus: "idle",
     config: null, connected: false,
     modal: null, editingItem: null, detailItem: null,
     formImageMode: "upload", formImageData: "", formImageIsNew: false, formVocab: [],
-    setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""},
-    imageBlobCache: {}
+    setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""}
   };
-
-  function b64Encode(str){
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(m,p1){ return String.fromCharCode('0x'+p1); }));
-  }
-  function b64Decode(str){
-    return decodeURIComponent(atob(str.replace(/\n/g,'')).split('').map(function(c){
-      return '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  }
 
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
   function escapeHtml(s){
@@ -248,114 +252,6 @@
     t.textContent = msg; t.className = isError ? "show error" : "show";
     clearTimeout(showToast._t);
     showToast._t = setTimeout(function(){ t.className = ""; }, 3800);
-  }
-
-  function ghHeaders(extra){
-    var h = {
-      "Authorization": "Bearer " + state.config.token,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28"
-    };
-    if(extra) for(var k in extra) h[k] = extra[k];
-    return h;
-  }
-  function repoBase(){ return "/repos/" + state.config.owner + "/" + state.config.repo; }
-
-  async function ghGetFile(path){
-    var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(state.config.branch), { headers: ghHeaders() });
-    if(res.status === 404) return null;
-    if(!res.ok) throw new Error("GitHub read failed (" + res.status + ")");
-    return res.json();
-  }
-  async function ghPutFile(path, base64Content, message, sha){
-    var body = { message: message, content: base64Content, branch: state.config.branch };
-    if(sha) body.sha = sha;
-    var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path, {
-      method: "PUT", headers: ghHeaders({"Content-Type":"application/json"}), body: JSON.stringify(body)
-    });
-    if(!res.ok){
-      var err = await res.json().catch(function(){return {};});
-      throw new Error(err.message || ("GitHub write failed (" + res.status + ")"));
-    }
-    return res.json();
-  }
-  async function ghDeleteFile(path, sha, message){
-    try{
-      var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path, {
-        method: "DELETE", headers: ghHeaders({"Content-Type":"application/json"}),
-        body: JSON.stringify({ message: message, sha: sha, branch: state.config.branch })
-      });
-      return res.ok;
-    }catch(e){ return false; }
-  }
-
-  async function loadLibraryFromGitHub(){
-    var file = await ghGetFile(DATA_PATH);
-    if(file){
-      var jsonStr = b64Decode(file.content);
-      var parsed = JSON.parse(jsonStr);
-      state.items = parsed.items || [];
-      state.customTypes = parsed.customTypes || [];
-      state.dataSha = file.sha;
-    } else {
-      state.items = []; state.customTypes = [];
-      var initial = b64Encode(JSON.stringify({items:[], customTypes:[]}, null, 2));
-      var created = await ghPutFile(DATA_PATH, initial, "Initialize design library", null);
-      state.dataSha = created.content.sha;
-    }
-  }
-
-  async function saveLibraryToGitHub(message){
-    state.syncStatus = "syncing"; render();
-    try{
-      var latest = await ghGetFile(DATA_PATH);
-      var sha = latest ? latest.sha : state.dataSha;
-      var content = b64Encode(JSON.stringify({items: state.items, customTypes: state.customTypes}, null, 2));
-      var result = await ghPutFile(DATA_PATH, content, message || "Update library", sha);
-      state.dataSha = result.content.sha;
-      state.syncStatus = "ok";
-    }catch(e){
-      state.syncStatus = "error";
-      showToast("Sync failed: " + e.message, true);
-    }
-    render();
-  }
-
-  async function uploadImageToGitHub(dataUrl, idHint){
-    var match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
-    if(!match) throw new Error("Invalid image data");
-    var ext = match[1] === "image/png" ? "png" : "jpg";
-    var base64 = match[2];
-    var filename = "images/" + idHint + "." + ext;
-    await ghPutFile(filename, base64, "Add image " + filename, null);
-    return filename;
-  }
-
-  function resolveImageSrc(path){
-    if(!path) return "";
-    if(path.indexOf("http") === 0 || path.indexOf("data:") === 0) return path;
-    if(state.config.visibility === "public"){
-      return "https://raw.githubusercontent.com/" + state.config.owner + "/" + state.config.repo + "/" + state.config.branch + "/" + path;
-    }
-    if(state.imageBlobCache[path] && state.imageBlobCache[path] !== "pending") return state.imageBlobCache[path];
-    fetchPrivateImage(path);
-    return "";
-  }
-
-  async function fetchPrivateImage(path){
-    if(state.imageBlobCache[path] === "pending") return;
-    state.imageBlobCache[path] = "pending";
-    try{
-      var res = await fetch("https://api.github.com" + repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(state.config.branch), {
-        headers: ghHeaders({"Accept":"application/vnd.github.raw+json"})
-      });
-      if(!res.ok) throw new Error("image fetch failed");
-      var blob = await res.blob();
-      state.imageBlobCache[path] = URL.createObjectURL(blob);
-      render();
-    }catch(e){
-      delete state.imageBlobCache[path];
-    }
   }
 
   function resizeImageFile(file){
@@ -400,6 +296,18 @@
     });
   }
 
+  async function saveLibraryToGitHub(message){
+    state.syncStatus = "syncing"; render();
+    try{
+      await GitHubAPI.saveLibrary({items: state.items, customTypes: state.customTypes}, message || "Update library");
+      state.syncStatus = "ok";
+    }catch(e){
+      state.syncStatus = "error";
+      showToast("Sync failed: " + e.message, true);
+    }
+    render();
+  }
+
   function filteredItems(){
     return state.items.filter(function(it){
       if(state.activeType !== "All" && it.elementType !== state.activeType) return false;
@@ -426,7 +334,18 @@
 
   function render(){
     var app = document.getElementById("app");
-    if(state.loading){ app.innerHTML = '<div class="loading-screen">LOADING ARCHIVE…</div>'; return; }
+    if(state.loading){
+      if(state.connected){
+        app.innerHTML = '<div class="skeleton-grid">' +
+          '<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line tiny"></div></div></div>' +
+          '<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line tiny"></div></div></div>' +
+          '<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line tiny"></div></div></div>' +
+        '</div>';
+      } else {
+        app.innerHTML = '<div class="loading-screen">LOADING ARCHIVE…</div>';
+      }
+      return;
+    }
     if(!state.connected){ app.innerHTML = renderSetupScreen(); bindSetupEvents(); return; }
 
     var html = "";
@@ -488,18 +407,17 @@
 
     state.config = { owner: owner, repo: repo, branch: branch, visibility: f.visibility, token: token };
     try{
-      var res = await fetch("https://api.github.com" + repoBase(), { headers: ghHeaders() });
-      if(!res.ok){
-        throw new Error(res.status === 404 ? "Repo not found — check owner/repo, and that the token has access to it." : "Couldn't authenticate (" + res.status + "). Check your token's permissions.");
-      }
+      GitHubAPI.configure(state.config);
+      var lib = await GitHubAPI.loadLibrary();
+      state.items = lib.items;
+      state.customTypes = lib.customTypes;
       localStorage.setItem(CONFIG_KEY, JSON.stringify(state.config));
-      state.connected = true; state.loading = true; render();
-      await loadLibraryFromGitHub();
-      state.loading = false;
+      state.connected = true;
       showToast("Connected to " + owner + "/" + repo + ".");
       render();
     }catch(e){
       state.connected = false;
+      GitHubAPI.clearCache();
       showToast(e.message, true);
       btn.textContent = "Connect"; btn.disabled = false;
     }
@@ -510,6 +428,7 @@
     localStorage.removeItem(CONFIG_KEY);
     state.config = null; state.connected = false; state.items = []; state.customTypes = [];
     state.setupForm = {owner:"", repo:"", branch:"main", visibility:"public", token:""};
+    GitHubAPI.clearCache();
     render();
   }
 
@@ -526,7 +445,8 @@
       '<div class="topbar-actions">' +
         '<div class="search-box">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-          '<input id="searchInput" type="text" placeholder="Search title, theme, vocabulary…" value="' + escapeHtml(state.search) + '">' +
+          '<input id="searchInput" type="text" placeholder="Search title, theme, vocabulary…" value="' + escapeHtml(state.search) + '" aria-label="Search designs">' +
+          (state.search ? '<button class="search-clear" id="searchClear" title="Clear search">&times;</button>' : '') +
         '</div>' +
         '<button class="btn btn-ghost btn-sm" id="refreshBtn" title="Pull latest from GitHub">↻ Refresh</button>' +
         '<button class="btn btn-primary" id="addBtn">+ Add design</button>' +
@@ -559,7 +479,7 @@
   }
 
   function cardImageHtml(it){
-    var src = resolveImageSrc(it.image);
+    var src = GitHubAPI.resolveImageUrl(it.image);
     if(it.image && !src) return '<span class="img-loading">loading…</span>';
     if(!src) return '';
     return '<img src="' + src.replace(/"/g,'&quot;') + '" alt="' + escapeHtml(it.title) + '" loading="lazy">';
@@ -608,6 +528,12 @@
         if(again){ again.focus(); again.setSelectionRange(pos, pos); }
       });
     }
+    var searchClear = document.getElementById("searchClear");
+    if(searchClear) searchClear.addEventListener("click", function(){
+      state.search = ""; render();
+      var input = document.getElementById("searchInput");
+      if(input) input.focus();
+    });
     var addBtn = document.getElementById("addBtn");
     if(addBtn) addBtn.addEventListener("click", openAddModal);
     var emptyAddBtn = document.getElementById("emptyAddBtn");
@@ -615,7 +541,13 @@
     var refreshBtn = document.getElementById("refreshBtn");
     if(refreshBtn) refreshBtn.addEventListener("click", async function(){
       state.loading = true; render();
-      try{ await loadLibraryFromGitHub(); showToast("Synced with GitHub."); }
+      try{
+        GitHubAPI.configure(state.config);
+        var lib = await GitHubAPI.loadLibrary();
+        state.items = lib.items;
+        state.customTypes = lib.customTypes;
+        showToast("Synced with GitHub.");
+      }
       catch(e){ showToast("Refresh failed: " + e.message, true); }
       state.loading = false; render();
     });
@@ -662,26 +594,27 @@
   }
   function openEditModal(item){
     state.editingItem = item; state.formImageMode = "url";
-    state.formImageData = resolveImageSrc(item.image) || item.image || "";
+    state.formImageData = GitHubAPI.resolveImageUrl(item.image) || item.image || "";
     state.formImageIsNew = false;
     state.formVocab = (item.vocabulary || []).slice();
     state.modal = "edit"; state.detailItem = null; render();
   }
-  function closeModal(){ state.modal = null; state.editingItem = null; state.detailItem = null; render(); }
+  function closeModal(){ Modal.close(); }
 
   function renderModal(){
-    var overlay = document.createElement("div");
-    overlay.className = "modal-overlay"; overlay.id = "modalOverlay";
-    overlay.innerHTML = state.modal === "detail" ? renderDetailModal(state.detailItem) : renderFormModal();
-    document.body.appendChild(overlay);
-    overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
-    if(state.modal === "detail") bindDetailModalEvents(overlay); else bindFormModalEvents(overlay);
+    var html = state.modal === "detail" ? renderDetailModal(state.detailItem) : renderFormModal();
+    Modal.open(html, {
+      onBind: function(overlay){
+        if(state.modal === "detail") bindDetailModalEvents(overlay); else bindFormModalEvents(overlay);
+      },
+      onClose: function(){ state.modal = null; state.editingItem = null; state.detailItem = null; }
+    });
   }
 
   function renderDetailModal(it){
     if(!it) return "";
     var vocabHtml = (it.vocabulary||[]).map(function(v){ return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
-    var src = resolveImageSrc(it.image);
+    var src = GitHubAPI.resolveImageUrl(it.image);
     return '' +
     '<div class="modal detail-modal">' +
       '<div class="modal-header"><h2>' + escapeHtml(it.title || "Untitled") + '</h2><button class="modal-close" id="closeDetail">&times;</button></div>' +
@@ -713,12 +646,6 @@
       state.items = state.items.filter(function(it){ return it.id !== target.id; });
       closeModal();
       await saveLibraryToGitHub("Delete: " + target.title);
-      if(target.image && target.image.indexOf("images/") === 0){
-        try{
-          var f = await ghGetFile(target.image);
-          if(f) await ghDeleteFile(target.image, f.sha, "Remove image for deleted item: " + target.title);
-        }catch(e){ /* best effort */ }
-      }
       showToast("Item deleted.");
     });
   }
@@ -859,7 +786,7 @@
     try{
       if(state.formImageMode === "upload" && state.formImageIsNew && state.formImageData){
         statusEl.textContent = "Uploading image…";
-        imagePath = await uploadImageToGitHub(state.formImageData, itemId);
+        imagePath = await GitHubAPI.uploadImage(state.formImageData, itemId);
       } else if(state.formImageMode === "url"){
         var urlVal = overlay.querySelector("#urlInput") ? overlay.querySelector("#urlInput").value.trim() : "";
         if(urlVal && urlVal !== previousImage){
@@ -870,7 +797,7 @@
             var blob = await res.blob();
             var resized = await resizeImageFromBlob(blob);
             statusEl.textContent = "Uploading image…";
-            imagePath = await uploadImageToGitHub(resized, itemId);
+            imagePath = await GitHubAPI.uploadImage(resized, itemId);
           }catch(imgErr){
             imagePath = urlVal;
             showToast("Couldn't save a local copy of that image (source blocked it) — linked to the live URL instead.", true);
@@ -911,7 +838,12 @@
       try{ state.config = JSON.parse(saved); state.connected = true; }catch(e){}
     }
     if(state.connected){
-      try{ await loadLibraryFromGitHub(); }
+      try{
+        GitHubAPI.configure(state.config);
+        var lib = await GitHubAPI.loadLibrary();
+        state.items = lib.items;
+        state.customTypes = lib.customTypes;
+      }
       catch(e){ showToast("Couldn't sync with GitHub: " + e.message, true); }
     }
     state.loading = false;
