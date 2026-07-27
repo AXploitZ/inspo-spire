@@ -4,50 +4,55 @@
   var FOCUSABLE =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-  var active = null; // { overlay, previousFocus, onClose, keyHandler }
+  var active = null;
 
   function getFocusableElements(overlay) {
     var els = overlay.querySelectorAll(FOCUSABLE);
     return Array.prototype.slice.call(els);
   }
 
+  function cleanup() {
+    if (!active) return;
+    document.removeEventListener("keydown", active.keyHandler);
+    if (active.overlay && active.overlay.parentNode) {
+      active.overlay.parentNode.removeChild(active.overlay);
+    }
+    if (active.previousFocus && active.previousFocus.focus) {
+      active.previousFocus.focus();
+    }
+    active = null;
+  }
+
+  function dismiss() {
+    if (!active) return;
+    var onClose = active.onClose;
+    cleanup();
+    if (onClose) onClose();
+  }
+
   function handleKeydown(e) {
     if (!active) return;
-
-    // Escape → close
     if (e.key === "Escape") {
       e.preventDefault();
-      close();
+      dismiss();
       return;
     }
-
-    // Tab / Shift+Tab → trap focus
     if (e.key === "Tab") {
       var els = getFocusableElements(active.overlay);
-      if (els.length === 0) {
-        e.preventDefault();
-        return;
-      }
+      if (els.length === 0) { e.preventDefault(); return; }
       var first = els[0];
       var last = els[els.length - 1];
-
       if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
       } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     }
   }
 
   function open(contentHtml, options) {
     options = options || {};
-    close(); // close any existing modal first
+    cleanup();
 
     var previousFocus = document.activeElement;
 
@@ -56,11 +61,9 @@
     overlay.id = "modalOverlay";
     overlay.innerHTML = contentHtml;
 
-    // ARIA attributes
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
 
-    // Find or create a title element for aria-labelledby
     var titleEl = overlay.querySelector("h2");
     if (titleEl) {
       if (!titleEl.id) titleEl.id = "modal-title-" + Date.now();
@@ -69,12 +72,10 @@
 
     document.body.appendChild(overlay);
 
-    // Click outside to close
     overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) close();
+      if (e.target === overlay) dismiss();
     });
 
-    // Focus trap keydown handler
     var keyHandler = handleKeydown;
     document.addEventListener("keydown", keyHandler);
 
@@ -85,7 +86,6 @@
       keyHandler: keyHandler,
     };
 
-    // Focus first focusable element
     var focusable = getFocusableElements(overlay);
     if (focusable.length > 0) {
       focusable[0].focus();
@@ -94,47 +94,18 @@
       overlay.focus();
     }
 
-    // Call onBind callback if provided
     if (options.onBind) {
       options.onBind(overlay);
     }
-  }
-
-  function close() {
-    if (!active) return;
-
-    var overlay = active.overlay;
-    var previousFocus = active.previousFocus;
-    var onClose = active.onClose;
-
-    // Remove keydown listener
-    document.removeEventListener("keydown", active.keyHandler);
-
-    // Remove overlay from DOM
-    if (overlay && overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
-    }
-
-    // Restore focus
-    if (previousFocus && previousFocus.focus) {
-      previousFocus.focus();
-    }
-
-    // Fire callback
-    if (onClose) onClose();
-
-    active = null;
   }
 
   function isActive() {
     return active !== null;
   }
 
-  // --- Expose ---
-
   window.Modal = {
     open: open,
-    close: close,
+    close: dismiss,
     isActive: isActive,
   };
 })();
