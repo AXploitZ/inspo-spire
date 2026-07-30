@@ -5,9 +5,9 @@
       "title": "Zentry",
       "elementType": "Hero",
       "theme": "Luxury",
-      "brief": "test the larger brief after alredy testing",
+      "brief": "test the larger brief after alredy testing. Tests are testing",
       "sourceUrl": "https://zentry.com/",
-      "image": "images/ms3e4lbhcfzu23.jpg",
+      "image": "https://raw.githubusercontent.com/AXploitZ/inspo-spire/main/images/ms3e4lbhcfzu23.jpg",
       "vocabulary": [
         "testter"
       ],
