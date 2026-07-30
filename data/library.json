@@ -1,17 +1,6 @@
 {
   "items": [
     {
-      "id": "ms7g8hhxz0yv60",
-      "title": "beta",
-      "elementType": "Hero",
-      "theme": "",
-      "brief": "this goes first",
-      "sourceUrl": "",
-      "image": "",
-      "vocabulary": [],
-      "createdAt": 1785412048533
-    },
-    {
       "id": "ms75v80z68t2wi",
       "title": "Alpha",
       "elementType": "Hero",
