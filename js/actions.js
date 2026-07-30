@@ -7,16 +7,24 @@
   var uid = App.uid;
   var render = App.render;
 
-  App.saveLibraryToGitHub = async function (message) {
+  var saveQueue = Promise.resolve();
+
+  App.saveLibraryToGitHub = function (message) {
+    var msg = message || "Update library";
     state.syncStatus = "syncing"; render();
-    try {
-      await GitHubAPI.saveLibrary({ items: state.items, customTypes: state.customTypes }, message || "Update library");
-      state.syncStatus = "ok";
-    } catch (e) {
-      state.syncStatus = "error";
-      showToast("Sync failed: " + e.message, true);
-    }
-    render();
+
+    saveQueue = saveQueue.then(async function () {
+      try {
+        await GitHubAPI.saveLibrary({ items: state.items, customTypes: state.customTypes }, msg);
+        state.syncStatus = "ok";
+      } catch (e) {
+        state.syncStatus = "error";
+        showToast("Sync failed: " + e.message, true);
+      }
+      render();
+    });
+
+    return saveQueue;
   };
 
   App.handleConnect = async function () {
