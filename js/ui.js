@@ -146,11 +146,15 @@
       var indexLabel = "SPEC." + String(state.items.indexOf(it) + 1).padStart(3, "0");
       var vocabHtml = (it.vocabulary || []).slice(0, 4).map(function (v) { return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
       var isLiveUrl = it.image && it.image.indexOf("http") === 0;
-      return '<div class="card" data-id="' + it.id + '">' +
+      var isVideoLiveUrl = it.video && it.video.indexOf("http") === 0;
+      var canPreviewVideo = it.video && (it.video.indexOf("videos/") === 0 || it.video.match(/\.(mp4|webm|gif)$/i));
+      return '<div class="card" data-id="' + it.id + '"' + (canPreviewVideo ? ' data-video-src="' + escapeHtml(GitHubAPI.resolveVideoUrl(it.video)) + '"' : '') + '>' +
         '<div class="card-image-wrap">' + cardImageHtml(it) +
+        (canPreviewVideo ? '<video class="card-video-preview" muted loop playsinline preload="none"></video>' : '') +
         '<span class="card-index">' + indexLabel + '</span>' +
         (it.theme ? '<span class="card-theme-tag">' + escapeHtml(it.theme) + '</span>' : '') +
         (isLiveUrl ? '<span class="card-live-badge" title="Image linked live — not committed to repo">live</span>' : '') +
+        (it.video ? '<span class="card-video-badge" title="Has video"><svg viewBox="0 0 24 24" width="10" height="10" fill="' + (isVideoLiveUrl ? 'var(--danger)' : 'var(--accent)') + '"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>' : '') +
         '</div>' +
         '<div class="card-body">' +
         '<div class="card-title">' + escapeHtml(it.title || "Untitled") + '</div>' +
@@ -224,6 +228,24 @@
         var item = state.items.find(function (it) { return it.id === id; });
         if (item) { state.detailItem = item; state.modal = "detail"; App.render(); }
       });
+
+      var preview = card.querySelector(".card-video-preview");
+      var videoSrc = card.getAttribute("data-video-src");
+      if (preview && videoSrc) {
+        (function () {
+          var played = false;
+          card.addEventListener("mouseenter", function () {
+            if (!played) { preview.src = videoSrc; played = true; }
+            preview.style.display = "block";
+            preview.play().catch(function () {});
+          });
+          card.addEventListener("mouseleave", function () {
+            preview.pause();
+            preview.currentTime = 0;
+            preview.style.display = "none";
+          });
+        })();
+      }
     });
   }
 
