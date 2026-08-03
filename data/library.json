@@ -1,17 +1,6 @@
 {
   "items": [
     {
-      "id": "msd4nd6kzfo743",
-      "title": "Delta",
-      "elementType": "Forms",
-      "theme": "",
-      "brief": "consecutive",
-      "sourceUrl": "",
-      "image": "",
-      "vocabulary": [],
-      "createdAt": 1785755384444
-    },
-    {
       "id": "msd4m2cf5turnp",
       "title": "Charlie",
       "elementType": "Pricing",
