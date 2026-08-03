@@ -61,4 +61,27 @@
     var el = document.getElementById("modalOverlay");
     if (el) { var input = el.querySelector("#vocabInput"); if (input) input.focus(); }
   };
+
+  App.handleVideoFile = function (file) {
+    var validTypes = ["video/mp4", "video/webm", "image/gif", "video/ogg", "video/quicktime"];
+    if (validTypes.indexOf(file.type) === -1 && !file.type.startsWith("video/")) {
+      App.showToast("Please choose a video file (mp4, webm, or gif).", true);
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      App.showToast("Video is too large — GitHub's limit is 100MB.", true);
+      return;
+    }
+    App.syncFormToState();
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      App.state.formVideoData = e.target.result;
+      App.state.formVideoIsNew = true;
+      App.render();
+    };
+    reader.onerror = function () {
+      App.showToast("Couldn't read that video file.", true);
+    };
+    reader.readAsDataURL(file);
+  };
 })();

@@ -261,6 +261,24 @@
     return filename;
   }
 
+  async function uploadVideo(dataUrl, idHint) {
+    var match = dataUrl.match(/^data:(video\/\w+|image\/gif);base64,(.*)$/);
+    if (!match) throw new Error("Invalid video data");
+    var ext;
+    if (match[1] === "video/mp4") ext = "mp4";
+    else if (match[1] === "video/webm") ext = "webm";
+    else if (match[1] === "image/gif") ext = "gif";
+    else ext = "mp4";
+    var base64 = match[2];
+    var filename = "videos/" + idHint + "." + ext;
+    await apiPut(repoBase() + "/contents/" + filename, {
+      message: "Add video " + filename,
+      content: base64,
+      branch: config.branch,
+    });
+    return filename;
+  }
+
   async function deleteFile(path, sha, message) {
     return await apiDelete(repoBase() + "/contents/" + path, {
       message: message,
@@ -285,6 +303,27 @@
       );
     }
     // Private repo — check blob cache
+    if (imageBlobCache[path] && imageBlobCache[path] !== "pending")
+      return imageBlobCache[path];
+    fetchPrivateImage(path);
+    return "";
+  }
+
+  function resolveVideoUrl(path) {
+    if (!path) return "";
+    if (path.indexOf("http") === 0 || path.indexOf("data:") === 0) return path;
+    if (config.visibility === "public") {
+      return (
+        "https://raw.githubusercontent.com/" +
+        config.owner +
+        "/" +
+        config.repo +
+        "/" +
+        config.branch +
+        "/" +
+        path
+      );
+    }
     if (imageBlobCache[path] && imageBlobCache[path] !== "pending")
       return imageBlobCache[path];
     fetchPrivateImage(path);
@@ -329,8 +368,10 @@
     loadLibrary: loadLibrary,
     saveLibrary: saveLibrary,
     uploadImage: uploadImage,
+    uploadVideo: uploadVideo,
     deleteFile: deleteFile,
     resolveImageUrl: resolveImageUrl,
+    resolveVideoUrl: resolveVideoUrl,
     fetchPrivateImage: fetchPrivateImage,
     clearCache: clearCache,
   };

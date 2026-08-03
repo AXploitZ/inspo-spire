@@ -14,6 +14,7 @@
     config: null, connected: false,
     modal: null, editingItem: null, detailItem: null, saving: false,
     formImageMode: "upload", formImageData: "", formImageIsNew: false, formVocab: [],
+    formVideoMode: "upload", formVideoData: "", formVideoIsNew: false,
     formTitle: "", formElementType: "", formTheme: "", formBrief: "", formSourceUrl: "",
     setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""}
   };
