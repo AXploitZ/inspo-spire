@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "id": "msd66i3p6o09vo",
+      "title": "ApeChain",
+      "elementType": "Hero",
+      "theme": "",
+      "brief": "Carousel Showcase",
+      "sourceUrl": "https://apechain.com/",
+      "image": "images/msd66i3p6o09vo.jpg",
+      "vocabulary": [],
+      "createdAt": 1785757958982
+    },
+    {
       "id": "msd4solob9fd6g",
       "title": "Echo",
       "elementType": "Hero",
