@@ -21,19 +21,6 @@
       "image": "images/msd66i3p6o09vo.jpg",
       "vocabulary": [],
       "createdAt": 1785757958982
-    },
-    {
-      "id": "ms3e4lbhcfzu23",
-      "title": "Zentry",
-      "elementType": "Hero",
-      "theme": "Luxury",
-      "brief": "test the larger brief after alredy testing. Tests are testing",
-      "sourceUrl": "https://zentry.com/",
-      "image": "https://raw.githubusercontent.com/AXploitZ/inspo-spire/main/images/ms3e4lbhcfzu23.jpg",
-      "vocabulary": [
-        "testter"
-      ],
-      "createdAt": 1785166645286
     }
   ],
   "customTypes": []
