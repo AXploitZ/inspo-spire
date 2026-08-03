@@ -259,6 +259,30 @@
     });
   }
 
+  function detailVideoHtml(it) {
+    if (!it.video) return '';
+    var vSrc = GitHubAPI.resolveVideoUrl(it.video);
+
+    // YouTube
+    var ytMatch = it.video.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+    if (ytMatch) {
+      return '<div class="detail-video-wrap"><iframe class="detail-iframe" src="https://www.youtube.com/embed/' + ytMatch[1] + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+    }
+
+    // Loom
+    var loomMatch = it.video.match(/loom\.com\/share\/([\w-]+)/);
+    if (loomMatch) {
+      return '<div class="detail-video-wrap"><iframe class="detail-iframe" src="https://www.loom.com/embed/' + loomMatch[1] + '" frameborder="0" allow="fullscreen"></iframe></div>';
+    }
+
+    // Direct video
+    if (vSrc) {
+      var type = it.video.match(/\.webm$/i) ? 'video/webm' : 'video/mp4';
+      return '<video class="detail-video" controls preload="metadata"><source src="' + vSrc.replace(/"/g, '&quot;') + '" type="' + type + '"></video>';
+    }
+    return '';
+  }
+
   function renderDetailModal(it) {
     if (!it) return "";
     var vocabHtml = (it.vocabulary || []).map(function (v) { return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
@@ -268,11 +292,13 @@
       '<div class="modal detail-modal">' +
       '<div class="modal-header"><h2>' + escapeHtml(it.title || "Untitled") + '</h2><button class="modal-close" id="closeDetail">&times;</button></div>' +
       (src ? '<img class="detail-image" src="' + src.replace(/"/g, '&quot;') + '" alt="">' : '') +
+      detailVideoHtml(it) +
       '<div class="modal-body">' +
       '<div class="detail-tags-row">' +
       '<span class="detail-badge badge-type">' + escapeHtml(it.elementType) + '</span>' +
       (it.theme ? '<span class="detail-badge badge-theme">' + escapeHtml(it.theme) + '</span>' : '') +
       (isLiveUrl ? '<span class="detail-badge badge-live" title="Image linked live — not committed to repo. May break if source removes it.">live link</span>' : '') +
+      (it.video && it.video.indexOf("http") === 0 && !it.video.match(/(?:youtube|youtu\.be|loom)/) ? '<span class="detail-badge badge-live" title="Video linked live — not committed to repo">video live</span>' : '') +
       '</div>' +
       (it.brief ? '<div class="detail-brief">' + escapeHtml(it.brief) + '</div>' : '') +
       (vocabHtml ? '<div><div class="field-label">Vocabulary</div><div class="card-vocab">' + vocabHtml + '</div></div>' : '') +
