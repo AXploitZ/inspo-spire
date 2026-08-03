@@ -14,6 +14,7 @@
     config: null, connected: false,
     modal: null, editingItem: null, detailItem: null, saving: false,
     formImageMode: "upload", formImageData: "", formImageIsNew: false, formVocab: [],
+    formTitle: "", formElementType: "", formTheme: "", formBrief: "", formSourceUrl: "",
     setupForm: {owner:"", repo:"", branch:"main", visibility:"public", token:""}
   };
 
@@ -31,12 +32,26 @@
     return App.DEFAULT_TYPES.concat(App.state.customTypes);
   };
 
-  App.showToast = function (msg, isError) {
+  App.showToast = function (msg, isError, action) {
     var t = document.getElementById("toast");
-    t.textContent = msg;
+    t.innerHTML = "";
+    var span = document.createElement("span");
+    span.textContent = msg;
+    t.appendChild(span);
+    if (action) {
+      var btn = document.createElement("button");
+      btn.textContent = action.label;
+      btn.className = "toast-action";
+      btn.addEventListener("click", function () {
+        t.className = "";
+        clearTimeout(App.showToast._t);
+        action.callback();
+      });
+      t.appendChild(btn);
+    }
     t.className = isError ? "show error" : "show";
     clearTimeout(App.showToast._t);
-    App.showToast._t = setTimeout(function () { t.className = ""; }, 3800);
+    App.showToast._t = setTimeout(function () { t.className = ""; }, action ? 5500 : 3800);
   };
 
   App.filteredItems = function () {

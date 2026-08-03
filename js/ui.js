@@ -145,10 +145,12 @@
     var cards = items.map(function (it) {
       var indexLabel = "SPEC." + String(state.items.indexOf(it) + 1).padStart(3, "0");
       var vocabHtml = (it.vocabulary || []).slice(0, 4).map(function (v) { return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
+      var isLiveUrl = it.image && it.image.indexOf("http") === 0;
       return '<div class="card" data-id="' + it.id + '">' +
         '<div class="card-image-wrap">' + cardImageHtml(it) +
         '<span class="card-index">' + indexLabel + '</span>' +
         (it.theme ? '<span class="card-theme-tag">' + escapeHtml(it.theme) + '</span>' : '') +
+        (isLiveUrl ? '<span class="card-live-badge" title="Image linked live — not committed to repo">live</span>' : '') +
         '</div>' +
         '<div class="card-body">' +
         '<div class="card-title">' + escapeHtml(it.title || "Untitled") + '</div>' +
@@ -164,12 +166,16 @@
   function bindHeaderEvents() {
     var search = document.getElementById("searchInput");
     if (search) {
+      var searchTimer;
       search.addEventListener("input", function (e) {
         state.search = e.target.value;
         var pos = e.target.selectionStart;
-        App.render();
-        var again = document.getElementById("searchInput");
-        if (again) { again.focus(); again.setSelectionRange(pos, pos); }
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          App.render();
+          var again = document.getElementById("searchInput");
+          if (again) { again.focus(); again.setSelectionRange(pos, pos); }
+        }, 200);
       });
     }
     var searchClear = document.getElementById("searchClear");
@@ -235,6 +241,7 @@
     if (!it) return "";
     var vocabHtml = (it.vocabulary || []).map(function (v) { return '<span class="vocab-pill">' + escapeHtml(v) + '</span>'; }).join("");
     var src = GitHubAPI.resolveImageUrl(it.image);
+    var isLiveUrl = it.image && it.image.indexOf("http") === 0;
     return '' +
       '<div class="modal detail-modal">' +
       '<div class="modal-header"><h2>' + escapeHtml(it.title || "Untitled") + '</h2><button class="modal-close" id="closeDetail">&times;</button></div>' +
@@ -243,6 +250,7 @@
       '<div class="detail-tags-row">' +
       '<span class="detail-badge badge-type">' + escapeHtml(it.elementType) + '</span>' +
       (it.theme ? '<span class="detail-badge badge-theme">' + escapeHtml(it.theme) + '</span>' : '') +
+      (isLiveUrl ? '<span class="detail-badge badge-live" title="Image linked live — not committed to repo. May break if source removes it.">live link</span>' : '') +
       '</div>' +
       (it.brief ? '<div class="detail-brief">' + escapeHtml(it.brief) + '</div>' : '') +
       (vocabHtml ? '<div><div class="field-label">Vocabulary</div><div class="card-vocab">' + vocabHtml + '</div></div>' : '') +
@@ -256,25 +264,56 @@
       '</div>';
   }
 
+  App.syncFormToState = function () {
+    var overlay = document.getElementById("modalOverlay");
+    if (!overlay) return;
+    var titleEl = overlay.querySelector("#titleInput");
+    var themeEl = overlay.querySelector("#themeInput");
+    var briefEl = overlay.querySelector("#briefInput");
+    var sourceEl = overlay.querySelector("#sourceInput");
+    var typeEl = overlay.querySelector("#typeInput");
+    var urlEl = overlay.querySelector("#urlInput");
+    if (titleEl) state.formTitle = titleEl.value;
+    if (themeEl) state.formTheme = themeEl.value;
+    if (briefEl) state.formBrief = briefEl.value;
+    if (sourceEl) state.formSourceUrl = sourceEl.value;
+    if (typeEl) state.formElementType = typeEl.value;
+    if (urlEl) state.formImageData = urlEl.value;
+  };
+
   function bindDetailModalEvents(overlay) {
     overlay.querySelector("#closeDetail").addEventListener("click", App.closeModal);
     overlay.querySelector("#closeDetailBtn").addEventListener("click", App.closeModal);
     overlay.querySelector("#editItemBtn").addEventListener("click", function () { App.openEditModal(state.detailItem); });
     overlay.querySelector("#deleteItemBtn").addEventListener("click", async function () {
-      if (!confirm("Delete this item from your archive? This can't be undone.")) return;
+      if (!confirm("Delete this item from your archive?")) return;
       var target = state.detailItem;
+      var targetIndex = state.items.indexOf(target);
       state.items = state.items.filter(function (it) { return it.id !== target.id; });
       App.closeModal();
       await App.saveLibraryToGitHub("Delete: " + target.title);
-      showToast("Item deleted.");
+      showToast("Item deleted.", false, {
+        label: "Undo",
+        callback: async function () {
+          state.items.splice(targetIndex, 0, target);
+          await App.saveLibraryToGitHub("Restore: " + target.title);
+          showToast("Item restored.");
+          App.render();
+        }
+      });
     });
   }
 
   function renderFormModal() {
     var isEdit = state.modal === "edit";
     var it = state.editingItem || {};
+    var titleVal = state.formTitle !== undefined ? state.formTitle : (it.title || "");
+    var elementTypeVal = state.formElementType || it.elementType || "";
+    var themeVal = state.formTheme !== undefined ? state.formTheme : (it.theme || "");
+    var briefVal = state.formBrief !== undefined ? state.formBrief : (it.brief || "");
+    var sourceVal = state.formSourceUrl !== undefined ? state.formSourceUrl : (it.sourceUrl || "");
     var typeOptions = allTypes().map(function (t) {
-      return '<option value="' + escapeHtml(t) + '"' + (it.elementType === t ? ' selected' : '') + '>' + escapeHtml(t) + '</option>';
+      return '<option value="' + escapeHtml(t) + '"' + (elementTypeVal === t ? ' selected' : '') + '>' + escapeHtml(t) + '</option>';
     }).join("");
     var vocabChips = state.formVocab.map(function (v, i) {
       return '<span class="vocab-chip">' + escapeHtml(v) + '<button type="button" data-vocab-index="' + i + '">&times;</button></span>';
@@ -308,15 +347,15 @@
       '<div class="field-hint">Uploads and URLs are both committed to your repo as real image files when possible. If a source blocks downloading, we\'ll link to it live instead and let you know.</div>' +
       '</div>' +
       '<div><span class="field-label">Title</span>' +
-      '<input class="field-input" id="titleInput" type="text" placeholder="e.g. Split-screen hero with video bg" value="' + escapeHtml(it.title || "") + '"></div>' +
+      '<input class="field-input" id="titleInput" type="text" placeholder="e.g. Split-screen hero with video bg" value="' + escapeHtml(titleVal) + '"></div>' +
       '<div class="field-row">' +
       '<div><span class="field-label">Element type</span><select class="field-input" id="typeInput">' + typeOptions + '</select></div>' +
-      '<div><span class="field-label">Theme</span><input class="field-input" id="themeInput" list="themeList" placeholder="e.g. Brutalist" value="' + escapeHtml(it.theme || "") + '"><datalist id="themeList">' + themeOptionsHtml + '</datalist></div>' +
+      '<div><span class="field-label">Theme</span><input class="field-input" id="themeInput" list="themeList" placeholder="e.g. Brutalist" value="' + escapeHtml(themeVal) + '"><datalist id="themeList">' + themeOptionsHtml + '</datalist></div>' +
       '</div>' +
-      '<div><span class="field-label">Brief</span><textarea class="field-input" id="briefInput" placeholder="What makes this work — layout, spacing, contrast, motion…">' + escapeHtml(it.brief || "") + '</textarea></div>' +
+      '<div><span class="field-label">Brief</span><textarea class="field-input" id="briefInput" placeholder="What makes this work — layout, spacing, contrast, motion…">' + escapeHtml(briefVal) + '</textarea></div>' +
       '<div><span class="field-label">Vocabulary</span><div class="vocab-input-wrap" id="vocabWrap">' + vocabChips + '<input type="text" id="vocabInput" placeholder="Type a term, press Enter…"></div>' +
       '<div class="field-hint">e.g. asymmetric grid, kinetic type, oversized ghost button</div></div>' +
-      '<div><span class="field-label">Source link (optional)</span><input class="field-input" id="sourceInput" type="text" placeholder="https://…" value="' + escapeHtml(it.sourceUrl || "") + '"></div>' +
+      '<div><span class="field-label">Source link (optional)</span><input class="field-input" id="sourceInput" type="text" placeholder="https://…" value="' + escapeHtml(sourceVal) + '"></div>' +
       '</div>' +
       '<div class="modal-footer">' +
       '<span class="field-hint" id="formStatus"></span>' +
@@ -331,7 +370,7 @@
     overlay.querySelector("#cancelForm").addEventListener("click", App.closeModal);
 
     overlay.querySelectorAll(".toggle-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { state.formImageMode = btn.getAttribute("data-mode"); App.render(); });
+      btn.addEventListener("click", function () { App.syncFormToState(); state.formImageMode = btn.getAttribute("data-mode"); App.render(); });
     });
 
     if (state.formImageMode === "upload") {
@@ -348,7 +387,7 @@
       var urlInput = overlay.querySelector("#urlInput");
       if (urlInput) {
         urlInput.addEventListener("input", function (e) { state.formImageData = e.target.value; state.formImageIsNew = true; });
-        urlInput.addEventListener("blur", function () { App.render(); });
+        urlInput.addEventListener("blur", function () { App.syncFormToState(); App.render(); });
       }
     }
 
@@ -357,15 +396,15 @@
       if (e.key === "Enter" || e.key === ",") {
         e.preventDefault();
         var val = vocabInput.value.trim().replace(/,$/, "");
-        if (val && state.formVocab.indexOf(val) === -1) { state.formVocab.push(val); App.render(); App.focusVocabInput(); }
+        if (val && state.formVocab.indexOf(val) === -1) { App.syncFormToState(); state.formVocab.push(val); App.render(); App.focusVocabInput(); }
         else vocabInput.value = "";
       } else if (e.key === "Backspace" && vocabInput.value === "" && state.formVocab.length) {
-        state.formVocab.pop(); App.render(); App.focusVocabInput();
+        App.syncFormToState(); state.formVocab.pop(); App.render(); App.focusVocabInput();
       }
     });
     overlay.querySelectorAll("[data-vocab-index]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        state.formVocab.splice(parseInt(btn.getAttribute("data-vocab-index"), 10), 1); App.render();
+        App.syncFormToState(); state.formVocab.splice(parseInt(btn.getAttribute("data-vocab-index"), 10), 1); App.render();
       });
     });
 

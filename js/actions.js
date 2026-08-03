@@ -75,7 +75,10 @@
 
   App.openAddModal = function () {
     state.editingItem = null; state.formImageMode = "upload"; state.formImageData = ""; state.formImageIsNew = false;
-    state.formVocab = []; state.modal = "add"; render();
+    state.formVocab = [];
+    state.formTitle = ""; state.formElementType = App.DEFAULT_TYPES[0]; state.formTheme = "";
+    state.formBrief = ""; state.formSourceUrl = "";
+    state.modal = "add"; render();
   };
 
   App.openEditModal = function (item) {
@@ -83,6 +86,8 @@
     state.formImageData = GitHubAPI.resolveImageUrl(item.image) || item.image || "";
     state.formImageIsNew = false;
     state.formVocab = (item.vocabulary || []).slice();
+    state.formTitle = item.title || ""; state.formElementType = item.elementType || "";
+    state.formTheme = item.theme || ""; state.formBrief = item.brief || ""; state.formSourceUrl = item.sourceUrl || "";
     state.modal = "edit"; state.detailItem = null; render();
   };
 
@@ -92,11 +97,12 @@
     var overlay = document.getElementById("modalOverlay");
     var saveBtn = overlay.querySelector("#saveForm");
     var statusEl = overlay.querySelector("#formStatus");
-    var title = overlay.querySelector("#titleInput").value.trim();
-    var elementType = overlay.querySelector("#typeInput").value;
-    var theme = overlay.querySelector("#themeInput").value.trim();
-    var brief = overlay.querySelector("#briefInput").value.trim();
-    var sourceUrl = overlay.querySelector("#sourceInput").value.trim();
+    App.syncFormToState();
+    var title = state.formTitle.trim();
+    var elementType = state.formElementType;
+    var theme = state.formTheme.trim();
+    var brief = state.formBrief.trim();
+    var sourceUrl = state.formSourceUrl.trim();
 
     if (!title) { showToast("Give it a title first.", true); overlay.querySelector("#titleInput").focus(); return; }
 

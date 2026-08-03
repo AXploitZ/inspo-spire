@@ -47,6 +47,7 @@
 
   App.handleFile = function (file) {
     if (!file.type.startsWith("image/")) { App.showToast("Please choose an image file.", true); return; }
+    App.syncFormToState();
     App.resizeImageFile(file).then(function (dataUrl) {
       App.state.formImageData = dataUrl;
       App.state.formImageIsNew = true;
