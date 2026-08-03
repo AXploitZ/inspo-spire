@@ -73,7 +73,9 @@
     try {
       var res = await fetch("https://api.github.com" + path, {
         headers: headers(),
+        cache: "no-store",
       });
+      if (res.status === 404) return null;
       if (!res.ok) throw res;
       return await res.json();
     } catch (e) {
@@ -91,6 +93,7 @@
         method: "PUT",
         headers: headers({ "Content-Type": "application/json" }),
         body: JSON.stringify(body),
+        cache: "no-store",
       });
       if (!res.ok) throw res;
       return await res.json();
@@ -188,13 +191,16 @@
 
   async function saveLibrary(data, message) {
     var path = "data/library.json";
-
-    // Read latest SHA
-    var latest = await apiGet(
-      repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(config.branch)
-    );
-    var sha = latest ? latest.sha : dataSha;
     var content = b64Encode(JSON.stringify(data, null, 2));
+
+    // Use the SHA from our last successful write — the queue guarantees
+    // no other writes from this session happened in between, so this
+    // SHA is correct and avoids GitHub API read-caching delays.
+    var sha = dataSha;
+    if (!sha) {
+      var latest = await readSha(path);
+      sha = latest;
+    }
 
     try {
       var result = await apiPut(repoBase() + "/contents/" + path, {
@@ -206,12 +212,9 @@
       dataSha = result.content.sha;
       return result.content.sha;
     } catch (e) {
-      // Retry once on SHA conflict (422)
+      // SHA conflict (422) — re-read from API and retry
       if (e.message && e.message.indexOf("Sync conflict") !== -1) {
-        var retry = await apiGet(
-          repoBase() + "/contents/" + path + "?ref=" + encodeURIComponent(config.branch)
-        );
-        var retrySha = retry ? retry.sha : sha;
+        var retrySha = await readSha(path);
         var retryResult = await apiPut(repoBase() + "/contents/" + path, {
           message: message || "Update library",
           content: content,
@@ -222,6 +225,25 @@
         return retryResult.content.sha;
       }
       throw e;
+    }
+  }
+
+  async function readSha(path) {
+    try {
+      var res = await fetch(
+        "https://api.github.com" +
+          repoBase() +
+          "/contents/" +
+          path +
+          "?ref=" +
+          encodeURIComponent(config.branch),
+        { headers: headers(), cache: "no-store" }
+      );
+      if (!res.ok) return null;
+      var json = await res.json();
+      return json.sha;
+    } catch (e) {
+      return null;
     }
   }
 
