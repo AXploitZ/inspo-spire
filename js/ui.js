@@ -279,6 +279,8 @@
     if (sourceEl) state.formSourceUrl = sourceEl.value;
     if (typeEl) state.formElementType = typeEl.value;
     if (urlEl) state.formImageData = urlEl.value;
+    var videoUrlEl = overlay.querySelector("#videoUrlInput");
+    if (videoUrlEl) state.formVideoData = videoUrlEl.value;
   };
 
   function bindDetailModalEvents(overlay) {
@@ -292,6 +294,18 @@
       state.items = state.items.filter(function (it) { return it.id !== target.id; });
       App.closeModal();
       await App.saveLibraryToGitHub("Delete: " + target.title);
+      if (target.video && target.video.indexOf("videos/") === 0) {
+        try {
+          var vfMeta = await fetch(
+            "https://api.github.com/repos/" + state.config.owner + "/" + state.config.repo + "/contents/" + target.video + "?ref=" + encodeURIComponent(state.config.branch),
+            { headers: { Authorization: "Bearer " + state.config.token, Accept: "application/vnd.github+json" } }
+          );
+          if (vfMeta.ok) {
+            var vfData = await vfMeta.json();
+            await GitHubAPI.deleteFile(target.video, vfData.sha, "Remove video: " + target.title);
+          }
+        } catch (e) { /* best effort */ }
+      }
       showToast("Item deleted.", false, {
         label: "Undo",
         callback: async function () {
@@ -346,6 +360,26 @@
       imgSectionHtml +
       '<div class="field-hint">Uploads and URLs are both committed to your repo as real image files when possible. If a source blocks downloading, we\'ll link to it live instead and let you know.</div>' +
       '</div>' +
+      '<div>' +
+      '<span class="field-label">Video (optional)</span>' +
+      '<div class="image-source-toggle">' +
+        '<button type="button" class="toggle-btn' + (state.formVideoMode === "upload" ? ' active' : '') + '" data-video-mode="upload">Upload file</button>' +
+        '<button type="button" class="toggle-btn' + (state.formVideoMode === "url" ? ' active' : '') + '" data-video-mode="url">Paste URL</button>' +
+      '</div>' +
+      (state.formVideoMode === "upload"
+        ? '<div class="dropzone" id="videoDropzone">' +
+          (state.formVideoData
+            ? '<div style="padding:14px;"><div style="font-family:var(--font-mono);font-size:11px;color:var(--ok);">Video ready to commit</div>' + (state.formVideoData.indexOf("data:") === 0 ? '<div style="font-size:11px;color:var(--text-faint);margin-top:4px;">' + escapeHtml((state.formVideoData.match(/data:([^;]+)/) || [])[1] || "") + '</div>' : '') + '</div>'
+            : 'Drag &amp; drop a video, or click to browse<span style="display:block;font-size:10px;margin-top:4px;">mp4, webm, gif — max 100MB</span>') +
+          '<input type="file" id="videoFileInput" accept="video/mp4,video/webm,image/gif">' +
+        '</div>'
+        : '<input class="field-input" id="videoUrlInput" type="text" placeholder="https://youtube.com/… or direct .mp4 link" value="' + escapeHtml(state.formVideoData && state.formVideoData.indexOf("data:") !== 0 ? state.formVideoData : "") + '">' +
+          (state.formVideoData && state.formVideoData.indexOf("http") === 0
+            ? '<div class="field-hint" style="color:var(--ok);">Video URL will show as live embed</div>'
+            : '<div class="field-hint">YouTube, Loom, and direct video links. URL stays live — not committed to repo.</div>')
+      ) +
+      '<div class="field-hint">Video is shown alongside the screenshot. For moving or interactive designs.</div>' +
+      '</div>' +
       '<div><span class="field-label">Title</span>' +
       '<input class="field-input" id="titleInput" type="text" placeholder="e.g. Split-screen hero with video bg" value="' + escapeHtml(titleVal) + '"></div>' +
       '<div class="field-row">' +
@@ -388,6 +422,30 @@
       if (urlInput) {
         urlInput.addEventListener("input", function (e) { state.formImageData = e.target.value; state.formImageIsNew = true; });
         urlInput.addEventListener("blur", function () { App.syncFormToState(); App.render(); });
+      }
+    }
+
+    overlay.querySelectorAll("[data-video-mode]").forEach(function (btn) {
+      btn.addEventListener("click", function () { App.syncFormToState(); state.formVideoMode = btn.getAttribute("data-video-mode"); App.render(); });
+    });
+
+    if (state.formVideoMode === "upload") {
+      var videoDropzone = overlay.querySelector("#videoDropzone");
+      var videoFileInput = overlay.querySelector("#videoFileInput");
+      if (videoFileInput) videoFileInput.addEventListener("change", function (e) { if (e.target.files && e.target.files[0]) App.handleVideoFile(e.target.files[0]); });
+      if (videoDropzone) {
+        videoDropzone.addEventListener("dragover", function (e) { e.preventDefault(); videoDropzone.classList.add("drag-over"); });
+        videoDropzone.addEventListener("dragleave", function () { videoDropzone.classList.remove("drag-over"); });
+        videoDropzone.addEventListener("drop", function (e) {
+          e.preventDefault(); videoDropzone.classList.remove("drag-over");
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) App.handleVideoFile(e.dataTransfer.files[0]);
+        });
+      }
+    } else {
+      var videoUrlInput = overlay.querySelector("#videoUrlInput");
+      if (videoUrlInput) {
+        videoUrlInput.addEventListener("input", function (e) { state.formVideoData = e.target.value; state.formVideoIsNew = true; });
+        videoUrlInput.addEventListener("blur", function () { App.syncFormToState(); App.render(); });
       }
     }
 

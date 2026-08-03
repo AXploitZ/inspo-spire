@@ -78,6 +78,7 @@
     state.formVocab = [];
     state.formTitle = ""; state.formElementType = App.DEFAULT_TYPES[0]; state.formTheme = "";
     state.formBrief = ""; state.formSourceUrl = "";
+    state.formVideoMode = "upload"; state.formVideoData = ""; state.formVideoIsNew = false;
     state.modal = "add"; render();
   };
 
@@ -88,6 +89,9 @@
     state.formVocab = (item.vocabulary || []).slice();
     state.formTitle = item.title || ""; state.formElementType = item.elementType || "";
     state.formTheme = item.theme || ""; state.formBrief = item.brief || ""; state.formSourceUrl = item.sourceUrl || "";
+    state.formVideoMode = item.video && item.video.indexOf("http") === 0 ? "url" : "upload";
+    state.formVideoData = item.video || "";
+    state.formVideoIsNew = false;
     state.modal = "edit"; state.detailItem = null; render();
   };
 
@@ -112,6 +116,19 @@
     var previousImage = state.editingItem ? state.editingItem.image : "";
 
     try {
+      var videoPath = state.editingItem ? (state.editingItem.video || "") : "";
+
+      if (state.formVideoMode === "upload" && state.formVideoIsNew && state.formVideoData) {
+        statusEl.textContent = "Uploading video…";
+        videoPath = await GitHubAPI.uploadVideo(state.formVideoData, itemId);
+      } else if (state.formVideoMode === "url") {
+        var videoUrlVal = state.formVideoData || "";
+        if (videoUrlVal !== (state.editingItem ? (state.editingItem.video || "") : "")) {
+          state.formVideoIsNew = true;
+        }
+        videoPath = videoUrlVal;
+      }
+
       if (state.formImageMode === "upload" && state.formImageIsNew && state.formImageData) {
         statusEl.textContent = "Uploading image…";
         imagePath = await GitHubAPI.uploadImage(state.formImageData, itemId);
@@ -141,12 +158,13 @@
         state.editingItem.title = title; state.editingItem.elementType = elementType;
         state.editingItem.theme = theme; state.editingItem.brief = brief;
         state.editingItem.sourceUrl = sourceUrl; state.editingItem.image = imagePath;
+        state.editingItem.video = videoPath;
         state.editingItem.vocabulary = state.formVocab.slice();
         await App.saveLibraryToGitHub("Update: " + title);
       } else {
         state.items.unshift({
           id: itemId, title: title, elementType: elementType, theme: theme, brief: brief,
-          sourceUrl: sourceUrl, image: imagePath, vocabulary: state.formVocab.slice(), createdAt: Date.now()
+          sourceUrl: sourceUrl, image: imagePath, video: videoPath, vocabulary: state.formVocab.slice(), createdAt: Date.now()
         });
         await App.saveLibraryToGitHub("Add: " + title);
       }
